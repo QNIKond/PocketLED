@@ -7,13 +7,14 @@
 
 Note curNote;
 
-uint8_t curHps = 0; //half period samples counter
-uint8_t targetHps; //Current length of half period of modulated signal in modulation periods
+uint8_t curHps; //half period samples counter
+uint16_t freqCount;
+uint16_t curFreqStep;
 fl16 curMq; //Current length of the modulation impulse in cpu ticks
 fl16 curSlope; //Added to curMq each period
 
-fl16 curMperiod;
-fl16 curSlide;
+//fl16 curMperiod;
+uint16_t curSlide;
 
 uint16_t periodCounter;
 uint8_t targetPeriodCount;
@@ -31,7 +32,7 @@ void soundSetup(){
 	TIMSK1 |= _BV(TOIE1);
 }
 
-static inline void startBlankHalfPeriod(){
+static inline void startBlankHalfPeriod(uint8_t t){
 	TCCR1A &= ~_BV(WGM11); //Normal mode
 	TCCR1B &= ~_BV(WGM12);
 	
@@ -39,7 +40,7 @@ static inline void startBlankHalfPeriod(){
 	
 	TCCR1B &= ~_BV(CS10);
 	TCCR1B |= _BV(CS12); //Prescaler 256
-	OCR1A = ((uint16_t)targetHps)<<1;
+	OCR1A = t;
 	
 	TIMSK1 |= _BV(OCIE1A); //Enabling compare A interrupt
 	TIFR1 |= _BV(TOV1); //Clearing overflow interrupt flag
@@ -60,14 +61,11 @@ static inline void loadCurNote(const Note *note){
 }
 
 static inline void resetFrequency(){
-	curMperiod = curNote.mperiod;
+	curFreqStep = curNote.freqStep;
 	curSlide = curNote.slide;
-	targetHps = FLTOINT8(curMperiod);
 }
 
 void playNote(const Note *note){
-	targetHps = curNote.mperiod;
-	
 	loadCurNote(note);
 	resetFrequency();
 	curHps = 0;
@@ -87,14 +85,12 @@ static inline void endNote(){
 }
 
 static inline void updateFrequency(){
-	curHps = 0;
-	if((curMperiod+curSlide)>1)
-		curMperiod += curSlide;
+	if((curFreqStep+curSlide)>1)
+		curFreqStep += curSlide;
 	curSlide += curNote.dslide;
-	targetHps = FLTOINT8(curMperiod);
 	
-	if((curNote.lowRetrigger && (targetHps <= curNote.lowRetrigger)) ||
-		(curNote.highRetrigger && (targetHps >= curNote.highRetrigger)))
+	if((curNote.lowRetrigger && (curFreqStep <= curNote.lowRetrigger)) ||
+		(curNote.highRetrigger && (curFreqStep >= curNote.highRetrigger)))
 		resetFrequency();
 }
 
@@ -127,9 +123,11 @@ static inline void updateAmplitude(){
 //Called every 512 instructions (31250Hz)
 ISR(TIMER1_OVF_vect){
 	++curHps;
-	if(curHps>=targetHps){ //End of half period
+	freqCount += curFreqStep;
+	if(freqCount < curFreqStep){ //End of half period
 		curMq += curSlope;
-		startBlankHalfPeriod();
+		startBlankHalfPeriod(curHps);
+		curHps = 0;
 		updateFrequency();
 		if(++periodCounter >= targetPeriodCount)
 			updateAmplitude();

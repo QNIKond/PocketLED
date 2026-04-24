@@ -27,7 +27,7 @@
 #define MSTOPERIOD(X) 
 
 const Note tone PROGMEM = {
-	.mperiod = 12,
+	.freqStep = 12,
 	.sustainTime = 12,
 	.repeat = 1
 	};
@@ -35,6 +35,6 @@ const Note tone PROGMEM = {
 const Note rampup PROGMEM = {
 	.attackTime = 12,
 	.attackSlope = 12,
-	.mperiod = 12,
+	.freqStep = 12,
 	.repeat = 1
 };

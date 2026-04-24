@@ -41,21 +41,10 @@ void switchBeep(uint16_t freq){
 Note asdf;
 void setup(){
 	cli();
-	
 	inputSetup();
 	LEDMatrixSetup();
 	UARTSetup();
-
-	TCCR1A |= _BV(COM1B0);
-	TCCR1B |= _BV(WGM12);
-	OCR1A = 1000;
-	TCCR1B |= _BV(CS11);
-	//TCCR2B |= _BV(CS22) | _BV(CS21) | _BV(CS20);
-	
-	
-	asdf.mperiod = 4;
-	
-
+	soundSetup();
 	sei();
 }
 
