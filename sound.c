@@ -7,17 +7,17 @@
 
 Note curNote;
 
-uint8_t curHps; //half period samples counter
 uint16_t freqCount;
-uint16_t curFreqStep;
-fl16 curMq; //Current length of the modulation impulse in cpu ticks
-fl16 curSlope; //Added to curMq each period
+fl32 curFreqStep;
 
-//fl16 curMperiod;
+uint8_t curMq; 
+uint16_t amplCount;
+uint16_t curSlope; //Added to amplCount each period
+
 uint16_t curSlide;
 
-uint16_t periodCounter;
-uint8_t targetPeriodCount;
+uint16_t mperiodCounter;
+uint8_t targetMPeriodCount;
 
 uint8_t curStage;
 uint8_t repeats;
@@ -61,85 +61,95 @@ static inline void loadCurNote(const Note *note){
 }
 
 static inline void resetFrequency(){
-	curFreqStep = curNote.freqStep;
+	FLTOINT16(curFreqStep) = curNote.freqStep;
 	curSlide = curNote.slide;
+	freqCount = 0;
 }
 
-void playNote(const Note *note){
-	loadCurNote(note);
+static inline void resetSound(){
 	resetFrequency();
-	curHps = 0;
-	curMq = (fl16)(3<<8);
+	curMq = 3;
+	amplCount = 0;
 	curSlope = curNote.attackSlope;
-	periodCounter = 0;
-	targetPeriodCount = curNote.attackTime;
+	mperiodCounter = 0;
+	targetMPeriodCount = curNote.attackTime;
 	curStage = 0;
 	repeats = 0;
 	
 	OCR1AL = 3;
+}
+
+void playNote(const Note *note){
+	loadCurNote(note);
+	resetSound();
 	startMainHalfPeriod();
 }
 
 static inline void endNote(){
 	TCCR1B &= ~_BV(CS10);
+	TCCR1C |= _BV(FOC1B); //Clearing pin
 }
 
-static inline void updateFrequency(){
-	if((curFreqStep+curSlide)>1)
-		curFreqStep += curSlide;
-	curSlide += curNote.dslide;
+static inline void updateFrequency(uint8_t t){
+	if(curNote.slideDirection&SLIDEDIRUP) curFreqStep += ((uint32_t)curSlide)<<5*t;
+	else curFreqStep -= curSlide<<5*t;
+	if(curNote.slideDirection&DSLIDEDIRUP) curSlide += curNote.dslide;
+	else curSlide -= curNote.dslide;
 	
-	if((curNote.lowRetrigger && (curFreqStep <= curNote.lowRetrigger)) ||
-		(curNote.highRetrigger && (curFreqStep >= curNote.highRetrigger)))
+	if((curNote.lowRetrigger && (FLTOINT16(curFreqStep) <= curNote.lowRetrigger)) ||
+		(curNote.highRetrigger && (FLTOINT16(curFreqStep) >= curNote.highRetrigger)))
 		resetFrequency();
 }
 
-static inline void updateAmplitude(){
+static inline void nextStage(){
 	++curStage;
 	if(curStage == 1){
-		targetPeriodCount += curNote.sustainSlope;
+		targetMPeriodCount += curNote.sustainSlope;
 		curSlope = curNote.sustainSlope;
 	}
 	else if (curStage == 2){
-		targetPeriodCount += curNote.decayTime;
+		targetMPeriodCount += curNote.decayTime;
 		curSlope = curNote.decaySlope;
 	}
 	else{
 		++repeats;
-		if(curNote.repeat && (repeats >= curNote.repeat))
+		if((curNote.repeat+1) && (repeats >= curNote.repeat+1))
 			endNote();
 		else{
-			curStage = 0;
-			
-			periodCounter = 0;
-			resetFrequency();
-			
-			targetPeriodCount = curNote.attackTime;
-			curSlope = curNote.attackSlope;
+			uint8_t t = repeats;
+			resetSound();
+			repeats = t;
 		}
 	}
 }
 
 //Called every 512 instructions (31250Hz)
 ISR(TIMER1_OVF_vect){
-	++curHps;
-	freqCount += curFreqStep;
-	if(freqCount < curFreqStep){ //End of half period
-		curMq += curSlope;
-		startBlankHalfPeriod(curHps);
-		curHps = 0;
-		updateFrequency();
-		if(++periodCounter >= targetPeriodCount)
-			updateAmplitude();
+	freqCount += FLTOINT16(curFreqStep);
+	if(freqCount < FLTOINT16(curFreqStep)){ //End of half period
+		uint8_t hps = 255/FLTOINT16(curFreqStep) + 1;
+		mperiodCounter += hps;
+		updateFrequency(hps);
+		startBlankHalfPeriod(hps);
+		if(mperiodCounter >= targetMPeriodCount)
+			nextStage();
+	}
+	
+	amplCount += curSlope;
+	if(amplCount < curSlope){
+		if(!curStage)
+			++curMq;
+		else
+			--curMq;
 	}
 }
 
 ISR(TIMER1_COMPA_vect){
 	startMainHalfPeriod();
 	if(curNote.grain)
-		OCR1AL = lerp(0, FLTOINT8(curMq), 255-lerp(0, (uint8_t)xorshift32(), curNote.grain));
+		OCR1AL = lerp(0, curMq, 255-lerp(0, (uint8_t)xorshift32(), curNote.grain));
 	else
-		OCR1AL = FLTOINT8(curMq);
+		OCR1AL = curMq;
 	if(OCR1AL < 3) //OCR1AL can be equal to 0 but not 1 and 2?
 		OCR1AL = 3;
 }
