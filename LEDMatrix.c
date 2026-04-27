@@ -80,8 +80,7 @@ void prepareScreen(uint8_t* sc){
 	}
 }
 static inline void drawCurRow(){
-	uint8_t t = PORTB & _BV(PORTB2);
-	PORTB = *curOp | t;
+	PORTB = *curOp;
 	PORTC = (*curOp) >> 2;
 	++curOp;
 }
@@ -89,11 +88,14 @@ static inline void drawCurRow(){
 //8.192 ms per frame
 ISR(TIMER0_COMPA_vect){
 	OCR0A >>= 1;
-	if(OCR0A <= 3){
-		drawCurRow(); //... | 4*8 cycles | this row | 2*8 cycles | ...
-		_delay_loop_2(4); //(2*8 - 8)/4
-		drawCurRow(); //... | 2*8 cycles | this row | 1*8 cycles | ...
-
+	if(OCR0A <= 15){
+		drawCurRow();
+		_delay_loop_2(64);
+		drawCurRow();
+		_delay_loop_2(16);
+		drawCurRow();
+		_delay_loop_2(4);
+		drawCurRow();
 		PORTB = 0;
 		PORTC = 0;
 		
@@ -101,7 +103,6 @@ ISR(TIMER0_COMPA_vect){
 			TURNPON(D,3);
 			BLINKP(D,4);
 			TURNPOFF(D,3);
-			//updateInput(); //????????
 			++mtime;
 			if(isNewFrame){
 				isNewFrame = 0;
@@ -120,7 +121,6 @@ ISR(TIMER0_COMPA_vect){
 		TIFR0 |=2;
 	}
 	TCNT0 = 0;
-	
 	drawCurRow();
 }
 inline void flushScreenAndWait(){
