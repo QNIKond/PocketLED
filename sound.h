@@ -35,7 +35,7 @@ extern uint8_t volume;
 
 void soundSetup();
 
-void playNote(const Note *note);
+void playNote(const Note *note, uint8_t priority);
 
 extern Note asdf;
 

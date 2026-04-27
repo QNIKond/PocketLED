@@ -6,6 +6,7 @@
 #include <avr/interrupt.h>
 
 Note curNote;
+uint8_t curPriority;
 
 uint16_t freqCount;
 fl32 curFreqStep;
@@ -79,15 +80,19 @@ static inline void resetSound(){
 	OCR1AL = 3;
 }
 
-void playNote(const Note *note){
+static inline void endNote(){
+	curPriority = 0;
+	TCCR1B &= ~_BV(CS10);
+	TCCR1C |= _BV(FOC1B); //Clearing pin
+}
+
+void playNote(const Note *note, uint8_t priority){
+	if(curPriority >= priority)
+		return;
+	curPriority = priority;
 	loadCurNote(note);
 	resetSound();
 	startMainHalfPeriod();
-}
-
-static inline void endNote(){
-	TCCR1B &= ~_BV(CS10);
-	TCCR1C |= _BV(FOC1B); //Clearing pin
 }
 
 static inline void updateFrequency(uint8_t t){
