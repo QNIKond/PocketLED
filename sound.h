@@ -5,6 +5,25 @@
 
 #define SLIDEDIRUP 1
 #define DSLIDEDIRUP 2
+
+#define MODFREQ 31250
+#define MSTOMPERIOD(MS)				(MS##UL*MODFREQ/2000)
+#define MSTOOVERFLOW(MS, C)			(uint16_t)(65535UL*(C)/MSTOMPERIOD(MS))
+#define FREQTOSTEP(F)				((65536*(F)*2) / MODFREQ)
+
+#define FREQSTEP(F)					.freqStep = FREQTOSTEP(F)
+#define SLIDECURVE(MS, DF, DDF, S)	.slide = (FREQTOSTEP(DF)*2048UL)/MSTOMPERIOD(MS),\
+									.dslide = ((FREQTOSTEP(DDF)*2048UL)/MSTOMPERIOD(MS)*65535)/MSTOMPERIOD(MS),\
+									.slideDirection = S
+#define ATTACKCURVE(MS)				.attackTime = MSTOMPERIOD(MS), \
+									.attackSlope = MSTOOVERFLOW(MS, 255)
+#define SUSTAINCURVE(MS, FIN)		.sustainTime = MSTOMPERIOD(MS), \
+									.sustainSlope = MSTOOVERFLOW(MS, 255-FIN)
+#define DECAYCURVE(MS, START)		.decayTime = MSTOMPERIOD(MS), \
+									.decaySlope = MSTOOVERFLOW(MS, START)
+#define RETRIGGER(LOW, HIGH)		.lowRetrigger = FREQTOSTEP(LOW), \
+									.highRetrigger = FREQTOSTEP(HIGH) \
+
 typedef struct{
 	//Frequency
 	uint16_t freqStep; //freqStep * [half the number of modulation periods in one period] = 2^16
@@ -30,12 +49,15 @@ typedef struct{
 
 extern const Note tone;
 extern const Note rampup;
+extern const Note allNote;
 
 extern uint8_t volume;
 
 void soundSetup();
 
 void playNote(const Note *note, uint8_t priority);
+
+void endNote();
 
 extern Note asdf;
 

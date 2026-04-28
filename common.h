@@ -12,7 +12,7 @@
 #include <stdint.h>
 
 #define F_CPU 16000000UL
-#define ISPINP(X,Y) (PIN##X & 1<<(PORT##X##Y))
+#define ISPINP(X,Y) (PIN##X & (1<<(PORT##X##Y)))
 #define TURNPON(X,Y) PORT##X |= 1<<(PORT##X##Y)
 #define TURNPOFF(X,Y) PORT##X &= ~(1<<(PORT##X##Y))
 #define TOGGLEP(X,Y) PORT##X ^= 1<<(PORT##X##Y)

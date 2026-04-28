@@ -33,15 +33,15 @@ void sendParam(uint8_t cmd, uint8_t param){
 }
 
 void retrieveParam(uint8_t request, uint8_t response, uint8_t param){
-	if(dbgFlags&(1<<request)){
-		dbgFlags &= ~(1<<request);
+	if(dbgFlags&(1UL<<request)){
+		dbgFlags &= ~(1UL<<request);
 		sendParam(response, param);
 	}
 }
 
 void updateParam(uint8_t request, uint8_t response, uint8_t *param){
-	if(dbgFlags&(1<<request)){
-		dbgFlags &= ~(1<<request);
+	if(dbgFlags&(1UL<<request)){
+		dbgFlags &= ~(1UL<<request);
 		for (uint8_t i = 0; i < DBGINCOUNT; ++i){
 			if(dbgCmds[i] == request){
 				*param = dbgInput[i];
@@ -59,7 +59,7 @@ ISR(USART_RX_vect) {
 	uint8_t data = UDR0;
 	if(c){
 		c = 0;
-		dbgFlags |= 1<<cmd;
+		dbgFlags |= 1UL<<cmd;
 		for (uint8_t i = 0; i < DBGINCOUNT; ++i){
 			if(dbgCmds[i] == cmd){
 				dbgInput[i] = data;

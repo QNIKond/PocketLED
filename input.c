@@ -26,7 +26,6 @@ static void updateInputStates(uint8_t dt){
 			timeouts[i] += dt;
 		}
 		if(((prevInput^inputRaw)&(1<<i))&&(timeouts[i] >= DEBOUNCETIME)){
-			sendMsg(0x11);
 			timeouts[i] = 0;
 			if(inputRaw&(1<<i))
 				inputDown |= (1<<i);
@@ -54,9 +53,6 @@ void updateInput(uint8_t dt){
 	#endif // STAND
 
 	inputRaw |= dbgKeyInput;
-	if(inputRaw != prevInput)
-		sendParam(0x05, inputRaw);
-	//retrieveParam(0x08, 0xA3, inputRaw);
 	updateInputStates(dt);
 	prevInput = inputRaw;
 }

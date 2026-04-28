@@ -21,25 +21,7 @@
 	uint8_t grain;	//How much noise is added
 	uint8_t repeat; //0 Toggle mode
 					//N Repeat N times*/
-
-
-#define MODFREQ 31250
-#define MSTOMPERIOD(MS) (MS##UL*MODFREQ/1000) 
-#define MSTOOVERFLOW(MS, C) (uint16_t)(65535UL*C/MSTOMPERIOD(MS))
-#define FREQTOSTEP(F)				((65536*F*2) / MODFREQ)
-#define FREQSTEP(F)					.freqStep = FREQTOSTEP(F)
-#define SLIDECURVE(MS, DF, DDF, S)	.slide = (FREQTOSTEP(DF)*2048UL)/MSTOMPERIOD(MS),\
-									.dslide = (FREQTOSTEP(DDF)*2048UL)/MSTOMPERIOD(MS),\
-									.slideDirection = S
-#define ATTACKCURVE(MS)				.attackTime = MSTOMPERIOD(MS), \
-									.attackSlope = MSTOOVERFLOW(MS, 255)
-#define SUSTAINCURVE(MS, FIN)		.sustainTime = MSTOMPERIOD(MS), \
-									.sustainSlope = MSTOOVERFLOW(MS, 255-FIN)
-#define DECAYCURVE(MS, START)		.decayTime = MSTOMPERIOD(MS), \
-									.decaySlope = MSTOOVERFLOW(MS, START)
-#define RETRIGGER(LOW, HIGH)		.lowRetrigger = FREQTOSTEP(LOW), \
-									.highRetrigger = FREQTOSTEP(HIGH) \
-								
+				
 const Note tone PROGMEM = {
 	FREQTOSTEP(1000),
 	SUSTAINCURVE(1000, 255),
@@ -50,7 +32,7 @@ const Note rampup PROGMEM = {
 	ATTACKCURVE(500),
 };
 
-const Note fullTest PROGMEM = {
+const Note allNote PROGMEM = {
 	FREQTOSTEP(1000),
 	SLIDECURVE(200, 400, 50,  SLIDEDIRUP),
 	RETRIGGER(0, 2500),
