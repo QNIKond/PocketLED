@@ -25,14 +25,19 @@ uint8_t curStage;
 uint8_t repeats;
 
 void soundSetup(){
-	DDRB |= 1 << PORTB2;
-	TCCR1A |= _BV(COM1B1);//Set on Bottom, clear on match
-	TCCR1A |= _BV(WGM11); //Fast PWM, TOP: 0x01FF
-	TCCR1B |= _BV(WGM12);
-	//TCCR1B |= _BV(CS10); //Prescaler 1
-	OCR1BL = 3;
 	OCR1A = 0xFFFF;
 	TIMSK1 |= _BV(TOIE1);
+}
+
+static inline void enablePin(){
+	DDRB |= _BV(PORTB2);
+	TCCR1A |= _BV(COM1B1);
+}
+
+static inline void disablePin(){
+	TCCR1A &= ~_BV(COM1B1);
+	DDRB &= ~_BV(PORTB2);
+	PORTB &= ~_BV(PORTB2);
 }
 
 static inline void startBlankHalfPeriod(uint8_t t){
@@ -60,10 +65,6 @@ static inline void startMainHalfPeriod(){
 	TIMSK1 &= ~_BV(OCIE1B);
 }
 
-static inline void loadCurNote(const Note *note){
-	memcpy_P(&curNote, note,sizeof(curNote));
-}
-
 static inline void resetFrequency(){
 	FLTOINT16(curFreqStep) = curNote.freqStep;
 	
@@ -85,11 +86,12 @@ static inline void resetSound(){
 }
 
 void playNote(const Note *note, uint8_t priority){
+	enablePin();
 	if(curPriority >= priority)
 		return;
 	
 	curPriority = priority;
-	loadCurNote(note);
+	memcpy_P(&curNote, note,sizeof(curNote));
 	resetSound();
 	startMainHalfPeriod();
 	
@@ -102,9 +104,9 @@ void endNote(){
 	curPriority = 0;
 	TCCR1B &= ~_BV(CS10);
 	TCCR1B &= ~_BV(CS12);
-	TCCR1C |= _BV(FOC1B); //Clearing pin
 	TIFR1 |= _BV(TOV1); //Clearing overflow interrupt flag
 	TIFR1 |= _BV(OCF1B); //Clearing overflow interrupt flag
+	disablePin();
 }
 
 static inline void updateFrequency(uint8_t t){
@@ -149,14 +151,10 @@ static inline void nextStage(){
 }
 
 //Called every 512 instructions (31250Hz)
-uint16_t ttt;
 ISR(TIMER1_OVF_vect){
 	//sei();
 	freqCount += FLTOINT16(curFreqStep);
 	if(freqCount < FLTOINT16(curFreqStep)){ //End of half period
-		//retrieveParam(0x11, 0x02, OCR1BL);
-// 		sendParam(0x15, FLTOINT16(curFreqStep)>>8);
-// 		sendParam(0x16, FLTOINT16(curFreqStep));
 		uint16_t hps = 65535UL/FLTOINT16(curFreqStep) + 1;
 		mperiodCounter += hps;
 		updateFrequency(hps);
@@ -184,6 +182,6 @@ ISR(TIMER1_COMPB_vect){
 		OCR1BL = lerp(0, curMq, 255-lerp(0, (uint8_t)xorshift32(), curNote.grain));
 	else
 		OCR1BL = curMq;
-	if(OCR1BL < 3) //OCR1BL can be equal to 0 but not 1 and 2?
+	if(OCR1BL < 3)
 		OCR1BL = 3;
 }

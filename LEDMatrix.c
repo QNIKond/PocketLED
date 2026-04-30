@@ -80,7 +80,7 @@ void prepareScreen(uint8_t* sc){
 	}
 }
 static inline void drawCurRow(){
-	PORTB = *curOp;
+	PORTB = *curOp&(~_BV(PORTB2));
 	PORTC = (*curOp) >> 2;
 	++curOp;
 }
