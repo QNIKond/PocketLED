@@ -12,9 +12,8 @@
 #define FREQTOSTEP(F)				((65536*(F)*2) / MODFREQ)
 
 #define FREQSTEP(F)					.freqStep = FREQTOSTEP(F)
-#define SLIDECURVE(MS, DF, DDF, S)	.slide = (FREQTOSTEP(DF)*2048UL)/MSTOMPERIOD(MS),\
-									.dslide = ((FREQTOSTEP(DDF)*2048UL)/MSTOMPERIOD(MS)*65535)/MSTOMPERIOD(MS),\
-									.slideDirection = S
+#define SLIDECURVE(MS, DF, DDF)		.slide = (FREQTOSTEP(DF)*16777216LL)/MSTOMPERIOD(MS),\
+									.dslide = ((FREQTOSTEP(DDF)*16777216LL)/MSTOMPERIOD(MS))/MSTOMPERIOD(MS)
 #define ATTACKCURVE(MS)				.attackTime = MSTOMPERIOD(MS), \
 									.attackSlope = MSTOOVERFLOW(MS, 255)
 #define SUSTAINCURVE(MS, FIN)		.sustainTime = MSTOMPERIOD(MS), \
@@ -27,9 +26,8 @@
 typedef struct{
 	//Frequency
 	uint16_t freqStep; //freqStep * [half the number of modulation periods in one period] = 2^16
-	uint16_t slide; //Current freqStep will be incremented by slide every period
-	uint16_t dslide; //Current slide will be incremented by dslide every period
-	uint8_t slideDirection;
+	int32_t slide; //Current freqStep will be incremented by slide every period
+	int32_t dslide; //Current slide will be incremented by dslide every period
 	uint16_t lowRetrigger; //When freqStep passes below lowRetrigger frequency is reset
 	uint16_t highRetrigger; //When freqStep passes above highRetrigger frequency is reset
 	

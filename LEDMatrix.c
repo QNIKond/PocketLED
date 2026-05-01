@@ -6,6 +6,7 @@
 #include <avr/interrupt.h>
 #include <util/delay.h>
 #include <string.h>
+#include "UARTDebug.h"
 
 static uint8_t screen2[16][16];
 static uint8_t screen1[16][16];
@@ -32,7 +33,7 @@ const uint8_t _NeoPixelGammaTable[256] PROGMEM = { //_NeoPixelGammaTable
 	154, 156, 158, 160, 162, 164, 166, 168, 170, 172, 174, 176, 178, 180, 182,
 	184, 186, 188, 191, 193, 195, 197, 199, 202, 204, 206, 209, 211, 213, 215,
 	218, 220, 223, 225, 227, 230, 232, 235, 237, 240, 242, 245, 247, 250, 252,
-255};uint64_t mtime; //Race condition possible
+255};volatile uint64_t mtime; //Race condition possible
 void LEDMatrixSetup(){
 	TCCR0A = 0x02; //CTC mode
 	OCR0A = 64;
@@ -88,9 +89,9 @@ static inline void drawCurRow(){
 //8.192 ms per frame
 ISR(TIMER0_COMPA_vect){
 	OCR0A >>= 1;
-	if(OCR0A <= 15){
-		drawCurRow();
-		_delay_loop_2(64);
+	if(OCR0A <= 7){
+// 		drawCurRow();
+// 		_delay_loop_2(64);
 		drawCurRow();
 		_delay_loop_2(16);
 		drawCurRow();
@@ -120,7 +121,8 @@ ISR(TIMER0_COMPA_vect){
 		TCNT0 = 0;
 		TIFR0 |=2;
 	}
-	TCNT0 = 0;
+	else
+		TCNT0 = 0;
 	drawCurRow();
 }
 inline void flushScreenAndWait(){

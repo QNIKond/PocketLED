@@ -10,19 +10,21 @@ Note curNote;
 uint8_t curPriority;
 
 uint16_t freqCount;
-fl32 curFreqStep;
+fl32 curFreqStep;//FF FF . FF FF
+fl32 curSlide;//FF. FF FF FF
 
 uint8_t curMq; 
 uint16_t amplCount;
 uint16_t curSlope; //Added to amplCount each period
 
-fl32 curSlide;
 
 uint16_t mperiodCounter;
 uint16_t targetMPeriodCount;
 
 uint8_t curStage;
 uint8_t repeats;
+
+uint16_t hps;
 
 void soundSetup(){
 	OCR1A = 0xFFFF;
@@ -52,6 +54,7 @@ static inline void startBlankHalfPeriod(uint8_t t){
 	
 	TIMSK1 |= _BV(OCIE1B); //Enabling compare A interrupt
 	TIFR1 |= _BV(TOV1); //Clearing overflow interrupt flag
+	TIFR1 |= _BV(OCF1A);
 	TCNT1 = 0;
 }
 
@@ -63,13 +66,18 @@ static inline void startMainHalfPeriod(){
 	TCCR1B |= _BV(CS10);
 	
 	TIMSK1 &= ~_BV(OCIE1B);
+	
+	TIFR1 |= _BV(TOV1); //Clearing overflow interrupt flag
+	TIFR1 |= _BV(OCF1A);
+	TCNT1 = 0;
 }
 
 static inline void resetFrequency(){
 	FLTOINT16(curFreqStep) = curNote.freqStep;
 	
-	curSlide = (uint32_t)curNote.slide<<16;
+	curSlide = curNote.slide;
 	freqCount = 0;
+	hps = 0;
 }
 
 static inline void resetSound(){
@@ -98,9 +106,6 @@ void playNote(const Note *note, uint8_t priority){
 }
 
 void endNote(){
-		sendParam(0x16, (curFreqStep)>>24);
-		sendParam(0x15, (curFreqStep)>>16);
-
 	curPriority = 0;
 	TCCR1B &= ~_BV(CS10);
 	TCCR1B &= ~_BV(CS12);
@@ -109,15 +114,8 @@ void endNote(){
 	disablePin();
 }
 
+
 static inline void updateFrequency(uint8_t t){
-	if(curNote.slideDirection&SLIDEDIRUP) curFreqStep += ((curSlide)>>11)*t;
-	else curFreqStep -= ((curSlide)>>11)*t;
-	if(curNote.slideDirection&DSLIDEDIRUP) curSlide += curNote.dslide*t;
-	else curSlide -= curNote.dslide*t;
-	
-// 	sendParam(0x15, (curSlide)>>16);
-// 	sendParam(0x16, (curSlide)>>24);
-	
 	if((curNote.lowRetrigger && (FLTOINT16(curFreqStep) <= curNote.lowRetrigger)) ||
 		(curNote.highRetrigger && (FLTOINT16(curFreqStep) >= curNote.highRetrigger)))
 		resetFrequency();
@@ -152,31 +150,34 @@ static inline void nextStage(){
 
 //Called every 512 instructions (31250Hz)
 ISR(TIMER1_OVF_vect){
-	//sei();
+	sei();
 	freqCount += FLTOINT16(curFreqStep);
+	curFreqStep += (((uint32_t)curSlide+0x80000000)>>8) - 0x800000;
+	curSlide += curNote.dslide;
+	++hps;
 	if(freqCount < FLTOINT16(curFreqStep)){ //End of half period
-		uint16_t hps = 65535UL/FLTOINT16(curFreqStep) + 1;
 		mperiodCounter += hps;
+		//cli();
 		updateFrequency(hps);
 		startBlankHalfPeriod(hps);
-		
+		hps = 0;
 		if(mperiodCounter >= targetMPeriodCount){
-			
 			nextStage();
 		}
 	}
 	
 	amplCount += curSlope;
 	if(amplCount < curSlope){
-		if(!curStage)
-			++curMq;
-		else
+		if(curStage)
 			--curMq;
+		else
+			++curMq;
 	}
-	//cli();
+	cli();
 }
 
 ISR(TIMER1_COMPB_vect){
+	sei();
 	startMainHalfPeriod();
 	if(curNote.grain)
 		OCR1BL = lerp(0, curMq, 255-lerp(0, (uint8_t)xorshift32(), curNote.grain));
@@ -184,4 +185,5 @@ ISR(TIMER1_COMPB_vect){
 		OCR1BL = curMq;
 	if(OCR1BL < 3)
 		OCR1BL = 3;
+	cli();
 }
