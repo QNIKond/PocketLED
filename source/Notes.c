@@ -43,3 +43,17 @@ const Note allNote PROGMEM = {
 	.grain = 200,
 	.repeat = 1
 };
+
+const Note tnote1 PROGMEM = {
+	FREQTOSTEP(1200),
+	SLIDECURVE(1000,-1000,2000),
+	SUSTAINCURVE(1000, 255),
+	//DECAYCURVE(1000, 255),
+	//.grain = 128,
+};
+
+const Note tnote2 PROGMEM = {
+	FREQTOSTEP(1000),
+	DECAYCURVE(1000, 255),
+	.grain = 255,
+};
