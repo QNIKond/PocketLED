@@ -12,9 +12,7 @@ static uint8_t screen2[16][16];
 static uint8_t screen1[16][16];
 static uint8_t* currentlyDisplayed = (uint8_t*)screen1;
 static uint8_t* curOp = (uint8_t*)screen1;
-uint8_t (*canvas)[16] = screen2;
-static volatile uint8_t isNewFrame;
-
+static volatile uint8_t isNewFrame;static volatile uint8_t* fc;uint8_t (*canvas)[16] = screen2;
 const uint8_t _NeoPixelGammaTable[256] PROGMEM = { //_NeoPixelGammaTable
 	0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
 	0,   0,   0,   0,   0,   0,   0,   0,   0,   1,   1,   1,   1,   1,   1,
@@ -33,8 +31,8 @@ const uint8_t _NeoPixelGammaTable[256] PROGMEM = { //_NeoPixelGammaTable
 	154, 156, 158, 160, 162, 164, 166, 168, 170, 172, 174, 176, 178, 180, 182,
 	184, 186, 188, 191, 193, 195, 197, 199, 202, 204, 206, 209, 211, 213, 215,
 	218, 220, 223, 225, 227, 230, 232, 235, 237, 240, 242, 245, 247, 250, 252,
-255};volatile uint64_t mtime; //Race condition possible
-void LEDMatrixSetup(){
+255};
+void LEDMatrixSetup(volatile uint8_t* frameCount){
 	TCCR0A = 0x02; //CTC mode
 	OCR0A = 64;
 	TCCR0B = 0x02; //Prescaler 8
@@ -44,6 +42,8 @@ void LEDMatrixSetup(){
 	DDRC |= 0b00111111;
 	
 	DDRD |= _BV(PORTD3) | _BV(PORTD4);
+	
+	fc = frameCount;
 }
 static inline uint64_t TransposeFlip(uint64_t x){
 	uint64_t t;
@@ -86,7 +86,7 @@ static inline void drawCurRow(){
 	++curOp;
 }
 
-//8.192 ms per frame
+//8.192 ms per frame (122.07 FPS)
 ISR(TIMER0_COMPA_vect){
 	OCR0A >>= 1;
 	if(OCR0A <= 7){
@@ -104,7 +104,7 @@ ISR(TIMER0_COMPA_vect){
 			TURNPON(D,3);
 			BLINKP(D,4);
 			TURNPOFF(D,3);
-			++mtime;
+			++(*fc);
 			if(isNewFrame){
 				isNewFrame = 0;
 				uint8_t* t = currentlyDisplayed;

@@ -8,9 +8,7 @@ extern const uint8_t _NeoPixelGammaTable[256] ;
 
 extern uint8_t (*canvas)[16];
 
-extern volatile uint64_t mtime;
-
-void LEDMatrixSetup();
+void LEDMatrixSetup(volatile uint8_t* frameCount);
 
 void flushScreenAndWait();
 

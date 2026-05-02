@@ -10,7 +10,7 @@ uint8_t inputUp;
 
 uint8_t prevInput;
 
-#define DEBOUNCETIME 4
+#define DEBOUNCETIME 4 //32.768 ms
 uint8_t timeouts[8];
 
 void inputSetup(){

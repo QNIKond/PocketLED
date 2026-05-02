@@ -9,12 +9,12 @@
 #include "UARTDebug.h"
 #include "sound.h"
 
-static uint64_t prevTime;
+static volatile uint8_t dt;
 
 void osSetup(){
 	cli();
 	inputSetup();
-	LEDMatrixSetup();
+	LEDMatrixSetup(&dt);
 	UARTSetup();
 	soundSetup();
 	sei();
@@ -43,7 +43,7 @@ void osRun(){
 		gradientWGamma();
 		
 		flushScreenAndWait();
-		updateInput(prevTime-mtime);
-		prevTime = mtime;
+		updateInput(dt);
+		dt = 0;
 	}
 }
