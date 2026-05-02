@@ -11,6 +11,10 @@
 
 static volatile uint8_t dt;
 
+#define X(A) &A,
+Game *games[] = {XGAMES};
+#undef X
+
 void osSetup(){
 	cli();
 	inputSetup();
@@ -25,6 +29,8 @@ void gradient(){
 	for(uint8_t j = 0; j < 16; ++j)
 	canvas[i][j] = (i<<4) + j;
 }
+
+
 void gradientWGamma(){
 	for(uint8_t i = 0; i < 16; ++i)
 	for(uint8_t j = 0; j < 16; ++j)

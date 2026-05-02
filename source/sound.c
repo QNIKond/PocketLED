@@ -6,25 +6,25 @@
 #include <avr/interrupt.h>
 #include "UARTDebug.h"
 
-Note curNote;
-uint8_t curPriority;
+static Note curNote;
+static uint8_t curPriority;
 
-uint16_t freqCount;
-fl32 curFreqStep;//FF FF . FF FF
-fl32 curSlide;//FF. FF FF FF
+static uint16_t freqCount;
+static fl32 curFreqStep;//FF FF . FF FF
+static fl32 curSlide;//FF. FF FF FF
 
-uint8_t curMq; 
-uint16_t amplCount;
-uint16_t curSlope; //Added to amplCount each period
+static uint8_t curMq; 
+static uint16_t amplCount;
+static uint16_t curSlope; //Added to amplCount each period
 
 
-uint16_t mperiodCounter;
-uint16_t targetMPeriodCount;
+static uint16_t mperiodCounter;
+static uint16_t targetMPeriodCount;
 
-uint8_t curStage;
-uint8_t repeats;
+static uint8_t curStage;
+static uint8_t repeats;
 
-uint16_t hps;
+static uint16_t hps;
 
 void soundSetup(){
 	OCR1A = 0xFFFF;
