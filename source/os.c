@@ -76,7 +76,7 @@ void mainMenu(uint8_t dt){
 	if(ISIMPLEMENTED(curGame))
 		games[curGame]->drawTitle(dt);
 		
-	drawRunningTitle(canvas, textT, 0,
+	drawRunningTitle(textT, 0,
 				gameNames[curGame].name,gameNames[curGame].len);
 	
 	//Draw Title separator			
