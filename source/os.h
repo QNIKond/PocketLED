@@ -6,13 +6,13 @@ typedef struct{
 	void (*start)();
 	void (*update)(uint8_t dt);
 	void (*stop)();
+	void (*drawTitle)(uint8_t dt);
 } Game;
 
 #define XGAMES\
-			X(Settings)\
-			X(Snake)\
-			X(Tetris)\
-			X(Arcanoid)
+			X(Snake)
+			
+#define ISIMPLEMENTED(X) (0b00000010&(1<<(X)))
 
 #define X(A) extern Game A;
 XGAMES
@@ -20,6 +20,13 @@ XGAMES
 
 extern Game *games[];
 #define GAMESCOUNT (sizeof(games)/sizeof(Game*))
+
+#define GAMEIMPLEMENT(G) Game G = {\
+	.start = G##Start,\
+	.update = G##Update,\
+	.stop = G##Stop,\
+	.drawTitle = G##DrawTitle,\
+};
 
 void osSetup();
 

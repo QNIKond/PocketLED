@@ -65,10 +65,21 @@ void mainMenu(uint8_t dt){
 		textT = 0;
 		isInnit = 0;
 	}
+	if((inputUp&INPA)&&ISIMPLEMENTED(curGame)){
+		textTCount = 0;
+		textT = 0;
+		isInnit = 0;
+		games[curGame]->start();
+		running = games[curGame]->update;
+	}
 	
+	if(ISIMPLEMENTED(curGame))
+		games[curGame]->drawTitle(dt);
+		
 	drawRunningTitle(canvas, textT, 0,
 				gameNames[curGame].name,gameNames[curGame].len);
-				
+	
+	//Draw Title separator			
 	uint8_t temp = 1;
 	for (uint8_t i = 0; i < 8; ++i){
 		canvas[5][i] = temp;
@@ -76,6 +87,7 @@ void mainMenu(uint8_t dt){
 		temp <<= 1;
 	}
 	
+	//Draw bottom navigation dots
 	uint8_t mx = 0;
 	for (uint8_t i = 0; i < GAMESCOUNT; ++i){
 		if (i == curGame){
