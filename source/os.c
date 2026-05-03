@@ -15,9 +15,16 @@ static volatile uint8_t dt;
 #define X(A) &A,
 Game *games[] = {XGAMES};
 #undef X
-#define X(A) "A",
-const char* gameNames[] = {XGAMES};
+#define X(Y) {#Y " ",sizeof(#Y)},
+struct{
+	const char* name;
+	uint8_t len;
+} gameNames[] = {XGAMES};
 #undef X
+
+static uint8_t curGame = 1;
+void mainMenu(uint8_t dt);
+void (*running)(uint8_t dt) = mainMenu;
 
 void osSetup(){
 	cli();
@@ -28,42 +35,59 @@ void osSetup(){
 	sei();
 }
 
-void gradient(){
-	for(uint8_t i = 0; i < 16; ++i)
-	for(uint8_t j = 0; j < 16; ++j)
-	canvas[i][j] = (i<<4) + j;
-}
-
-
-void gradientWGamma(){
-	for(uint8_t i = 0; i < 16; ++i)
-	for(uint8_t j = 0; j < 16; ++j)
-	canvas[i][j] = GAMMA((i<<4) + j);
+void mainMenu(uint8_t dt){
+	static uint8_t textT = 0;
+	static uint8_t textTCount = 0;
+	static uint8_t isInnit = 0;
+	textTCount += dt;
+	
+	if (!isInnit){
+		if(textTCount>=TEXTINNIT){
+			textTCount = 0;
+			isInnit = 1;
+		}
+	}
+	else if (textTCount >= TEXTSCROLLSPEED){
+		textTCount = 0;
+		++textT;
+		if (textT >= gameNames[curGame].len*4) textT = 0;
+	}
+	
+	if (inputUp&INPLEFT) {
+		curGame = (curGame-1)%GAMESCOUNT;
+		textTCount = 0;
+		textT = 0;
+		isInnit = 0;
+	}
+	if (inputUp&INPRIGHT) {
+		curGame = (curGame+1)%GAMESCOUNT;
+		textTCount = 0;
+		textT = 0;
+		isInnit = 0;
+	}
+	
+	drawRunningTitle(canvas, textT, 0,
+				gameNames[curGame].name,gameNames[curGame].len);
+	
+	uint8_t mx = 0;
+	for (uint8_t i = 0; i < GAMESCOUNT; ++i){
+		if (i == curGame){
+			canvas[15][mx] = 255;
+			canvas[15][mx+1] = 255;
+			mx += 3;
+		} 
+		else{
+			canvas[15][mx] = GAMMA(96);
+			mx += 2;
+		}
+	}
 }
 
 void osRun(){
-	uint8_t x = 0;
-	int8_t y = 10;
 	while (1){
-		if (inputUp&INPUP){
-			--y;
-		}
-		if (inputUp&INPLEFT){
-			--x;
-		}
-		if (inputUp&INPDOWN){
-			++y;
-		}
-		if (inputUp&INPRIGHT){
-			++x;
-		}
-		x %= 6*4;
-		drawRunningText(canvas, x%(6*4),0,"Tetris",6);
-		drawRunningText(canvas, x%(4*4),6,"2048",4);
-		drawRunningText(canvas, x%(2*4),12,"Q ",2);
-		
+		running(dt);
 		flushScreenAndWait();
 		updateInput(dt);
-		dt = 0;
+		dt = 1;
 	}
 }

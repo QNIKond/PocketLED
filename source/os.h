@@ -4,13 +4,12 @@
 
 typedef struct{
 	void (*start)();
-	void (*stop)();
-	
 	void (*update)(uint8_t dt);
-	void (*draw)(uint8_t dt);
+	void (*stop)();
 } Game;
 
 #define XGAMES\
+			X(Settings)\
 			X(Snake)\
 			X(Tetris)\
 			X(Arcanoid)
@@ -20,6 +19,7 @@ XGAMES
 #undef X
 
 extern Game *games[];
+#define GAMESCOUNT (sizeof(games)/sizeof(Game*))
 
 void osSetup();
 
