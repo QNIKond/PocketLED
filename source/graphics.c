@@ -82,8 +82,9 @@ void drawRunningText(uint8_t (*sc)[16], uint8_t t, int8_t y, const char* str, ui
 }
 
 void drawRunningTitle(uint8_t (*sc)[16], uint8_t t, int8_t y, const char* str, uint8_t len){
-	int8_t lc = -(t&3);
-	const char* s = str + (t>>2);
+	uint8_t divT = t / 5;
+	int8_t lc = -(t-divT*5);
+	const char* s = str + (divT);
 	while((lc<16)){
 		drawLetter(sc,lc, y, (*(s++))&(~0x20));
 		lc += 5;

@@ -50,7 +50,7 @@ void mainMenu(uint8_t dt){
 	else if (textTCount >= TEXTSCROLLSPEED){
 		textTCount = 0;
 		++textT;
-		if (textT >= gameNames[curGame].len*4) textT = 0;
+		if (textT >= gameNames[curGame].len*5) textT = 0;
 	}
 	
 	if (inputUp&INPLEFT) {
