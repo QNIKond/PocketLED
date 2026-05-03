@@ -8,11 +8,15 @@
 #include "input.h"
 #include "UARTDebug.h"
 #include "sound.h"
+#include "graphics.h"
 
 static volatile uint8_t dt;
 
 #define X(A) &A,
 Game *games[] = {XGAMES};
+#undef X
+#define X(A) "A",
+const char* gameNames[] = {XGAMES};
 #undef X
 
 void osSetup(){
@@ -38,15 +42,25 @@ void gradientWGamma(){
 }
 
 void osRun(){
+	uint8_t x = 0;
+	int8_t y = 10;
 	while (1){
 		if (inputUp&INPUP){
-			playNote(&tnote1, 128);
+			--y;
 		}
 		if (inputUp&INPLEFT){
-			playNote(&tnote2, 192);
+			--x;
 		}
-		
-		gradientWGamma();
+		if (inputUp&INPDOWN){
+			++y;
+		}
+		if (inputUp&INPRIGHT){
+			++x;
+		}
+		x %= 6*4;
+		drawRunningText(canvas, x%(6*4),0,"Tetris",6);
+		drawRunningText(canvas, x%(4*4),6,"2048",4);
+		drawRunningText(canvas, x%(2*4),12,"Q ",2);
 		
 		flushScreenAndWait();
 		updateInput(dt);

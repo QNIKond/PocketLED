@@ -21,10 +21,12 @@
 #define STAND
 
 typedef int16_t fl16;
-#define FLTOINT8(X) (((uint8_t*)&X)[1])
+#define FLTOINT8(X) (((uint8_t*)&(X))[1])
 
 typedef int32_t fl32;
-#define FLTOINT16(X) (((uint16_t*)&X)[1])
+#define FLTOINT16(X) (((uint16_t*)&(X))[1])
+
+#define HIGH8(X) (((uint8_t*)&(X))[1])
 
 static uint32_t xs_state = 2463534242u;
 static inline uint32_t xorshift32(void) {
