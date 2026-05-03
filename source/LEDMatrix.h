@@ -3,7 +3,7 @@
 #include <stdint.h>
 #include <avr/pgmspace.h>
 
-extern uint8_t (*canvas)[16];
+extern volatile uint8_t (*canvas)[16];
 
 void LEDMatrixSetup(volatile uint8_t* frameCount);
 

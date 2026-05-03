@@ -49,7 +49,10 @@ void gradientWGammaScreen(uint8_t (*sc)[16]){
 			sc[i][j] = GAMMA((i<<4) + j);
 }
 
-void drawLetter(uint8_t (*sc)[16], int8_t x, int8_t y, uint8_t letter){
+//const uint8_t shade[8] = {256,254,248,240,224,192,128,64};
+//const uint8_t cshade[8] = {52,58,69,84,106,136,182,255};
+const uint8_t bshade[8] = {128, 192, 255, 255, 255, 255, 255, 255};
+void drawLetter(volatile uint8_t (*sc)[16], int8_t x, int8_t y, uint8_t letter){
 	uint8_t l = 0;
 	uint16_t bl = 0;
 	
@@ -63,15 +66,19 @@ void drawLetter(uint8_t (*sc)[16], int8_t x, int8_t y, uint8_t letter){
 	
 	for (uint8_t j = 0; j < 5; ++j){
 		for (uint8_t i = 0; i < 3; ++i){
-			if(!(((x+i)|(y+j))&240) && (bl&0x8000))
-				sc[y+j][x+i] = 255;
+			if(!(((x+i)|(y+j))&240) && (bl&0x8000)){
+				if ((x+i)<8) 
+					sc[y+j][x+i] = GAMMA(bshade[x+i]);
+				else 
+					sc[y+j][x+i] = GAMMA(bshade[15-x-i]);
+			}
 			bl<<=1;
 		}
 	}
 }
 
 // t>>2 < len
-void drawRunningText(uint8_t (*sc)[16], uint8_t t, int8_t y, const char* str, uint8_t len){
+void drawRunningText(volatile uint8_t (*sc)[16], uint8_t t, int8_t y, const char* str, uint8_t len){
 	int8_t lc = -(t&3);
 	const char* s = str + (t>>2);
 	while((lc<16)){
@@ -81,7 +88,7 @@ void drawRunningText(uint8_t (*sc)[16], uint8_t t, int8_t y, const char* str, ui
 	}
 }
 
-void drawRunningTitle(uint8_t (*sc)[16], uint8_t t, int8_t y, const char* str, uint8_t len){
+void drawRunningTitle(volatile uint8_t (*sc)[16], uint8_t t, int8_t y, const char* str, uint8_t len){
 	uint8_t divT = t / 5;
 	int8_t lc = -(t-divT*5);
 	const char* s = str + (divT);

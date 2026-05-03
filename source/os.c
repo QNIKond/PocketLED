@@ -68,6 +68,13 @@ void mainMenu(uint8_t dt){
 	
 	drawRunningTitle(canvas, textT, 0,
 				gameNames[curGame].name,gameNames[curGame].len);
+				
+	uint8_t temp = 1;
+	for (uint8_t i = 0; i < 8; ++i){
+		canvas[5][i] = temp;
+		canvas[5][15-i] = temp;
+		temp <<= 1;
+	}
 	
 	uint8_t mx = 0;
 	for (uint8_t i = 0; i < GAMESCOUNT; ++i){
@@ -84,6 +91,9 @@ void mainMenu(uint8_t dt){
 }
 
 void osRun(){
+	for (uint8_t i = 0; i < 8; ++i){
+		sendParam(0x15, GAMMA(1<<i));
+	}
 	while (1){
 		running(dt);
 		flushScreenAndWait();

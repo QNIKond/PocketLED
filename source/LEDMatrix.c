@@ -12,8 +12,8 @@ static uint8_t screen2[16][16];
 static uint8_t screen1[16][16];
 static uint8_t* currentlyDisplayed = (uint8_t*)screen1;
 static uint8_t* curOp = (uint8_t*)screen1;
-static volatile uint8_t isNewFrame;static volatile uint8_t* fc;uint8_t (*canvas)[16] = screen2;
-
+static volatile uint8_t isNewFrame;static volatile uint8_t* fc;volatile uint8_t (*canvas)[16] = screen2;
+
 void LEDMatrixSetup(volatile uint8_t* frameCount){
 	TCCR0A = 0x02; //CTC mode
 	OCR0A = 64;
