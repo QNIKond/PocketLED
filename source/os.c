@@ -69,7 +69,7 @@ void mainMenu(uint8_t dt){
 		textTCount = 0;
 		textT = 0;
 		isInnit = 0;
-		games[curGame]->start();
+		games[curGame]->start(&__heap_start);
 		running = games[curGame]->update;
 	}
 	

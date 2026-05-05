@@ -3,11 +3,13 @@
 #include <stdint.h>
 
 typedef struct{
-	void (*start)();
+	void (*start)(void* mem);
 	void (*update)(uint8_t dt);
 	void (*stop)();
 	void (*drawTitle)(uint8_t dt);
 } Game;
+
+extern uint8_t __heap_start;
 
 #define XGAMES\
 			X(Snake)
