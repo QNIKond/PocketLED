@@ -11,8 +11,6 @@ typedef struct{
 
 #define XGAMES\
 			X(Snake)
-			
-#define ISIMPLEMENTED(X) (0b00000010&(1<<(X)))
 
 #define X(A) extern Game A;
 XGAMES
@@ -31,5 +29,7 @@ extern Game *games[];
 void osSetup();
 
 void osRun();
+
+void osExitToMenu();
 
 #endif /* OS_H_ */

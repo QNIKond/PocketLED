@@ -36,14 +36,14 @@ const uint16_t font[] PROGMEM = {
 	0xD6D0, 0x56A0, 0xF7C0, 0xF790, 0x7240, 0x71F0, 0xE920, 0xB6B0, 0xB6A0, 0xB7D0, 0xAAD0, 0xB520, 0xE570
 	};
 
-void gradientcanvasreen(){
+void gradientScreen(){
 	for(uint8_t i = 0; i < 16; ++i)
 		for(uint8_t j = 0; j < 16; ++j)
 			canvas[i][j] = (i<<4) + j;
 }
 
 
-void gradientWGammacanvasreen(){
+void gradientWGammaScreen(){
 	for(uint8_t i = 0; i < 16; ++i)
 		for(uint8_t j = 0; j < 16; ++j)
 			canvas[i][j] = GAMMA((i<<4) + j);

@@ -22,7 +22,7 @@ struct{
 } gameNames[] = {XGAMES};
 #undef X
 
-static uint8_t curGame = 1;
+static uint8_t curGame = 0;
 void mainMenu(uint8_t dt);
 void (*running)(uint8_t dt) = mainMenu;
 
@@ -65,7 +65,7 @@ void mainMenu(uint8_t dt){
 		textT = 0;
 		isInnit = 0;
 	}
-	if((inputUp&INPA)&&ISIMPLEMENTED(curGame)){
+	if((inputUp&INPA)){
 		textTCount = 0;
 		textT = 0;
 		isInnit = 0;
@@ -73,8 +73,8 @@ void mainMenu(uint8_t dt){
 		running = games[curGame]->update;
 	}
 	
-	if(ISIMPLEMENTED(curGame))
-		games[curGame]->drawTitle(dt);
+	
+	games[curGame]->drawTitle(dt);
 		
 	drawRunningTitle(textT, 0,
 				gameNames[curGame].name,gameNames[curGame].len);
@@ -103,13 +103,14 @@ void mainMenu(uint8_t dt){
 }
 
 void osRun(){
-	for (uint8_t i = 0; i < 8; ++i){
-		sendParam(0x15, GAMMA(1<<i));
-	}
 	while (1){
 		running(dt);
 		flushScreenAndWait();
 		updateInput(dt);
 		dt = 1;
 	}
+}
+
+void osExitToMenu(){
+	running = mainMenu;
 }
