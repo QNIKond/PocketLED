@@ -6,6 +6,9 @@
 #include <avr/interrupt.h>
 #include "UARTDebug.h"
 
+#define NOTES_IMPLEMENTATION
+#include "notes.h"
+
 static Note curNote;
 static uint8_t curPriority;
 
