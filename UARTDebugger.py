@@ -16,7 +16,8 @@ STOPBITS = serial.STOPBITS_ONE
 TIMEOUT = 0.1
 
 #Должно быть меньше 64 (0x40)
-COMMANDS = { 
+COMMANDS = {
+    "main": {"code": 0x02, "param": False},
     "var1": {"code": 0x11, "param": False},
     "var2": {"code": 0x12, "param": False},
     "var3": {"code": 0x13, "param": False},
@@ -72,7 +73,11 @@ class UartGuiApp:
 
         self.connected = False
 
-        self.rx_queue = queue.Queue()
+        self.MAX_QUEUE_SIZE = 500   # tune this
+        self.rx_queue = queue.Queue(maxsize=self.MAX_QUEUE_SIZE)
+
+        self.drop_count = 0
+        self.drop_warning_threshold = 50  # when to notify UI
         self.stop_event = threading.Event()
         self.ser = None
 
@@ -151,6 +156,21 @@ class UartGuiApp:
         self._log(f"Available commands: {', '.join(sorted(COMMANDS.keys()))}")
         self._log(f"UART: {PORT}, {BAUDRATE} 8N1")
 
+    def _safe_enqueue(self, msg):
+        try:
+            self.rx_queue.put_nowait(msg)
+        except queue.Full:
+            self.drop_count += 1
+
+            # Only occasionally report (avoid spam)
+            if self.drop_count == self.drop_warning_threshold:
+                try:
+                    self.rx_queue.put_nowait(
+                        f"WARNING: RX overflow, dropping messages..."
+                    )
+                except queue.Full:
+                    pass
+
     def _open_serial(self):
         try:
             self.ser = serial.Serial(
@@ -218,7 +238,7 @@ class UartGuiApp:
                     for b in data:
 
                         if expect_param:
-                            self.rx_queue.put(
+                            self._safe_enqueue(
                                 f"  RX: {last_text} 0x{b:02X} ({b}) (0x{last_cmd:02X})"
                             )
                             expect_param = False
@@ -233,11 +253,11 @@ class UartGuiApp:
                                 last_cmd = b
                                 last_text = entry["text"]
                             else:
-                                self.rx_queue.put(
+                                self._safe_enqueue(
                                     f"  RX: {entry['text']} (0x{b:02X})"
                                 )
                         else:
-                            self.rx_queue.put(f"  RX: 0x{b:02X}")
+                            self._safe_enqueue(f"  RX: 0x{b:02X}")
 
             # =========================
             # ЕСЛИ УСТРОЙСТВО ОТВАЛИЛОСЬ
@@ -256,10 +276,18 @@ class UartGuiApp:
                 time.sleep(reconnect_delay)
 
     def _poll_rx_queue(self):
+        processed = 0
+
         try:
-            while True:
+            while processed < 100:  # prevent UI starvation
                 msg = self.rx_queue.get_nowait()
                 self._log(msg)
+                processed += 1
+
+            # If we successfully drained some messages → reset drop counter
+            if processed > 0:
+                self.drop_count = 0
+
         except queue.Empty:
             pass
 

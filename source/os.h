@@ -12,7 +12,8 @@ typedef struct{
 extern uint8_t __heap_start;
 
 #define XGAMES\
-			X(Snake)
+			X(Snake)\
+			X(Tetris)
 
 #define X(A) extern Game A;
 XGAMES

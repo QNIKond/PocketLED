@@ -112,5 +112,5 @@ inline void flushScreenAndWait(){
 	prepareScreen((uint8_t*)canvas);
 	isNewFrame = 1;
 	while(isNewFrame);
-	memset(canvas, 0, 16*16);
+	memset((void*)canvas, 0, 16*16);
 }

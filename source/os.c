@@ -72,7 +72,9 @@ void mainMenu(uint8_t dt){
 		games[curGame]->start(&__heap_start);
 		running = games[curGame]->update;
 	}
-	
+	if (inputRaw&INPA){
+		xorshift32();
+	}
 	
 	games[curGame]->drawTitle(dt);
 		
@@ -104,10 +106,16 @@ void mainMenu(uint8_t dt){
 
 void osRun(){
 	while (1){
+		retrieveParam(0x14,0x02, 1);
 		running(dt);
 		flushScreenAndWait();
 		updateInput(dt);
 		dt = 1;
+		
+		if(dbgFlags&(1<<0x02)){
+			dbgFlags &= ~(1<<0x02);
+			osExitToMenu();
+		}
 	}
 }
 
