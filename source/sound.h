@@ -45,13 +45,8 @@ typedef struct{
 					//N Repeat N times after first one 
 } Note;
 
-extern const Note tone;
-extern const Note rampup;
-extern const Note allNote;
-extern const Note tnote1;
-extern const Note tnote2;
-
 extern uint8_t volume;
+extern uint8_t isMuted;
 
 void soundSetup();
 

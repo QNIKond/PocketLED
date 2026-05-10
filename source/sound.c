@@ -29,6 +29,8 @@ static uint8_t repeats;
 
 static uint16_t hps;
 
+uint8_t isMuted;
+
 void soundSetup(){
 	OCR1A = 0xFFFF;
 	TIMSK1 |= _BV(TOIE1);
@@ -97,8 +99,10 @@ static inline void resetSound(){
 }
 
 void playNote(const Note *note, uint8_t priority){
+	if (isMuted)
+		return;
 	enablePin();
-	if(curPriority >= priority)
+	if(curPriority > priority)
 		return;
 	
 	curPriority = priority;
@@ -109,12 +113,14 @@ void playNote(const Note *note, uint8_t priority){
 }
 
 void endNote(){
+	cli();
 	curPriority = 0;
 	TCCR1B &= ~_BV(CS10);
 	TCCR1B &= ~_BV(CS12);
 	TIFR1 |= _BV(TOV1); //Clearing overflow interrupt flag
-	TIFR1 |= _BV(OCF1B); //Clearing overflow interrupt flag
+	TIFR1 |= _BV(OCF1B); 
 	disablePin();
+	sei();
 }
 
 

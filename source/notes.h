@@ -3,24 +3,21 @@
 #include "sound.h"
 #include <avr/pgmspace.h>
 
-extern const Note tone;
-extern const Note rampup;
+extern const Note dbeep800;
+extern const Note dbeep1400;
 extern const Note allNote;
-extern const Note tnote1;
-extern const Note tnote2;
 
 #endif /*NOTES_H_*/
 	
 #ifdef NOTES_IMPLEMENTATION
 #undef NOTES_IMPLEMENTATION
-const Note tone PROGMEM = {
-	FREQTOSTEP(1000),
-	SUSTAINCURVE(1000, 255),
+const Note dbeep800 PROGMEM = {
+	FREQTOSTEP(800),
+	DECAYCURVE(300, 255),
 };
-	
-const Note rampup PROGMEM = {
-	FREQTOSTEP(1000),
-	ATTACKCURVE(500),
+const Note dbeep1400 PROGMEM = {
+	FREQTOSTEP(1400),
+	DECAYCURVE(300, 255),
 };
 
 const Note allNote PROGMEM = {
@@ -33,16 +30,6 @@ const Note allNote PROGMEM = {
 	DECAYCURVE(300, 128),
 	.grain = 200,
 	.repeat = 1
-};
-
-const Note tnote1 PROGMEM = {
-	FREQTOSTEP(800),
-	DECAYCURVE(600, 255),
-};
-
-const Note tnote2 PROGMEM = {
-	FREQTOSTEP(1400),
-	DECAYCURVE(600, 255),
 };
 
 #endif

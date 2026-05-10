@@ -8,7 +8,9 @@
 #include "input.h"
 #include "UARTDebug.h"
 #include "sound.h"
+#include "notes.h"
 #include "graphics.h"
+
 
 static volatile uint8_t dt;
 
@@ -54,12 +56,14 @@ void mainMenu(uint8_t dt){
 	}
 	
 	if (inputUp&INPLEFT) {
+		playNote(&dbeep1400, 128);
 		curGame = (curGame-1)%GAMESCOUNT;
 		textTCount = 0;
 		textT = 0;
 		isInnit = 0;
 	}
 	if (inputUp&INPRIGHT) {
+		playNote(&dbeep800, 128);
 		curGame = (curGame+1)%GAMESCOUNT;
 		textTCount = 0;
 		textT = 0;
@@ -106,11 +110,15 @@ void mainMenu(uint8_t dt){
 
 void osRun(){
 	while (1){
-		retrieveParam(0x14,0x02, 1);
 		running(dt);
 		flushScreenAndWait();
 		updateInput(dt);
 		dt = 1;
+		
+		if (((inputDown&INPUP) && (inputRaw&INPDOWN))||
+		((inputDown&INPDOWN) && (inputRaw&INPUP))){
+			isMuted ^= 1;
+		}
 		
 		if(dbgFlags&(1<<0x02)){
 			dbgFlags &= ~(1<<0x02);

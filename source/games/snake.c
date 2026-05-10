@@ -39,7 +39,6 @@ static struct{
 #define GETTAIL (sd->head+1<sd->length ? sd->head+1 : 0)
 
 static void reset(){
-	sendMsg(0x14);
 	sd->dir = SNRIGHT;
 	sd->length = 3;
 	sd->shape[0] = 0b111111;
@@ -126,8 +125,6 @@ static inline void gameTick(){
 			ttt += (sd->field[i]>>j)&1;
 		}
 	}
-	if(ttt!=sd->length)
-		sendParam(0x15,ttt);
 	
 	
 	
