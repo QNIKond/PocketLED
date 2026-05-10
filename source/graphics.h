@@ -7,6 +7,7 @@ extern const uint8_t _NeoPixelGammaTable[256];
 #define GAMMA(X) (pgm_read_byte(&_NeoPixelGammaTable[X]))
 
 #define HLINE(Y, X1, X2, B) for (uint8_t ihline = X1; ihline<=X2; ++ihline){canvas[Y][ihline] = B;}
+#define VLINE(X, Y1, Y2, B) for (uint8_t ivline = Y1; ivline<=Y2; ++ivline){canvas[ivline][X] = B;}
 
 extern volatile uint8_t (*canvas)[16];
 

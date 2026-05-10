@@ -72,9 +72,9 @@ void mainMenu(uint8_t dt){
 		games[curGame]->start(&__heap_start);
 		running = games[curGame]->update;
 	}
-	if (inputRaw&INPA){
-		xorshift32();
-	}
+	
+	xorshift32();
+	
 	
 	games[curGame]->drawTitle(dt);
 		

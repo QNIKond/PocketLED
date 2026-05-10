@@ -17,6 +17,7 @@ struct{
 	
 	uint8_t col[3*10*2]; // col[0]&1 is at the top  60b
 	Tetro curT; //10b
+	Tetro nextT;
 	
 } *td; //71b (72b)
 
@@ -29,7 +30,6 @@ enum{
 	ITETRO,//1111111
 	OTETRO,//111111
 };
-#define ISTODD(X) (((X)|1)==7)
 
 const uint8_t shapes[] PROGMEM = {	-1,-1,-1, 0, 1, 0,
 									-1, 0, 1, 0, 1,-1,
@@ -60,21 +60,21 @@ const uint8_t kicks[] PROGMEM = {
 					 0, 0, 0, 1,-1, 1,-1, 0
 					};
 
-const uint8_t Tcolors[8] = {0,88,116,144,172,200,228,255};
+//const uint8_t Tcolors[8] = {0,64,116,144,172,200,228,255};
+const uint8_t Tcolors[8] = {0,50,72,108,144,180,216,252};
 #define TCGLOWDOWN 40
 
 #define TETRISTICKSPEED 80
 
 #define TKICK(X)
 
-static void nextT();
+static void spawnNextT();
 static void resetTetris(){
-	sendMsg(0x14);
 	td->tickCount = 0;
  	for (uint8_t i = 0; i < 60; ++i)
  		td->col[i] = 0;
-
-	nextT();
+	spawnNextT();
+	spawnNextT();
 }
 
 void TetrisStart(void* mem){
@@ -208,21 +208,23 @@ static inline void fallT(){
 				td->curT.type);
 			}
 			testRows();
-			nextT();
+			spawnNextT();
 		}
 	}
 }
 
-static void nextT(){
-	do{
-		td->curT.type = ((uint8_t)xorshift32())&7;
-	} while (!td->curT.type);
+static void spawnNextT(){
+	td->curT = td->nextT;
+	do{ 
+		td->nextT.type = ((uint8_t)xorshift32())&7;
+	}while (!td->nextT.type);
 	
 	for (uint8_t i = 0; i < 3; ++i){
-		uint8_t addr = 6*(td->curT.type-1)+(i<<1);
-		td->curT.shape[i] = (v2){pgm_read_byte(&shapes[addr]),pgm_read_byte(&shapes[addr+1])};
+		uint8_t addr = 6*(td->nextT.type-1)+(i<<1);
+		td->nextT.shape[i] = (v2){pgm_read_byte(&shapes[addr]),pgm_read_byte(&shapes[addr+1])};
 	}
-	
+	td->nextT.pos = (v2){13, 14};
+	td->nextT.rot = 0;
 	td->curT.pos = (v2){4, 0};
 	td->curT.rot = 0;
 }
@@ -232,13 +234,26 @@ void TetrisStop();
 void TetrisUpdate(uint8_t dt){
 	if(inputDown)
 		moveT();
-	if(inputUp&INPESC){//++td->tickCount > TETRISTICKSPEED
+	if(inputUp&INPDOWN){//++td->tickCount > TETRISTICKSPEED
 		td->tickCount = 0;
 		fallT();
 	}
 	drawTetris(dt);
-// 	if(inputUp&INPESC)
-// 		TetrisStop();
+	if(inputUp&INPESC)
+		TetrisStop();
+}
+
+static void drawTetro(Tetro *tetro, uint8_t xbound){
+	uint8_t y = tetro->pos.y;
+	uint8_t x =  tetro->pos.x;
+	if((x<xbound)&&(y<16))
+		canvas[y][x] = GAMMA(Tcolors[tetro->type]);
+	for (uint8_t i = 0; i < 3; ++i){
+		y = tetro->pos.y+tetro->shape[i].y;
+		x = tetro->pos.x+tetro->shape[i].x;
+		if((x<xbound)&&(y<16))
+			canvas[y][x] = GAMMA(Tcolors[tetro->type]);
+	}
 }
 
 static inline void drawTetris(uint8_t dt){
@@ -248,23 +263,17 @@ static inline void drawTetris(uint8_t dt){
 		uint8_t c3 = td->col[i+40];
 		for (uint8_t j = 0; j < 8; ++j){
 			uint8_t type = (c1&1) | ((c2&1)<<1) | ((c3&1)<<2);
-			canvas[j+((i&1)<<3)][i>>1] = (Tcolors[type]);
+			canvas[j+((i&1)<<3)][i>>1] = GAMMA(Tcolors[type]);
 				
 			c2 >>= 1;
 			c3 >>= 1;
 			c1 >>= 1;
 		}
 	}
-	uint8_t y = td->curT.pos.y;
-	uint8_t x = td->curT.pos.x;
-	if((x<10)&&(y<16))
-		canvas[td->curT.pos.y][td->curT.pos.x] = Tcolors[td->curT.type];
-	for (uint8_t i = 0; i < 3; ++i){
-		y = td->curT.pos.y+td->curT.shape[i].y;
-		x = td->curT.pos.x+td->curT.shape[i].x;
-		if((x<10)&&(y<16))
-			canvas[y][x] = Tcolors[td->curT.type];
-	}
+	drawTetro(&td->curT,10);
+	drawTetro(&td->nextT,16);
+	VLINE(10, 12, 15, 3);
+	HLINE(11, 10, 15, 3);
 }
 
 void TetrisStop(){
