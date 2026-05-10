@@ -20,6 +20,7 @@ struct{
 	Tetro nextT;
 	Tetro holdT;
 	uint8_t holdEnabled;
+	uint8_t drop;
 	
 } *td; //71b (72b)
 
@@ -78,6 +79,7 @@ static void resetTetris(){
 	spawnNextT();
 	spawnNextT();
 	td->holdT.type = 0;
+	td->drop = 0;
 }
 
 void TetrisStart(void* mem){
@@ -236,6 +238,7 @@ static void spawnNextT(){
 	td->curT.rot = 0;
 	
 	td->holdEnabled = 1;
+	td->drop = 0;
 }
 
 static inline void drawTetris(uint8_t dt);
@@ -259,7 +262,9 @@ void TetrisUpdate(uint8_t dt){
 		td->holdT.pos = (v2){13, 9};
 		td->holdEnabled = 0;
 	}
-	if(inputUp&INPDOWN){//++td->tickCount > TETRISTICKSPEED
+	if(inputDown&INPDOWN)
+		td->drop = 1;
+	if((++td->tickCount > TETRISTICKSPEED) || td->drop){
 		td->tickCount = 0;
 		fallT();
 	}
