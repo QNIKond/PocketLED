@@ -37,7 +37,7 @@ static struct{
 
 //#define FMOVE(X,Y, D) ((D)&2 ? (X) : (Y)) += (((D)&1)<<1) - 1;
 #define FMOVE(X,Y, D) if((D)&0b10) (X) += (((D)&1)<<1) - 1; else (Y) += (((D)&1)<<1) - 1;
-#define GETTAIL (sd->head+1<sd->length ? sd->head+1 : 0)
+#define GETTAIL (sd->head+1<sd->length ? sd->head+1 : sd->head+1-sd->length)
 
 static void reset(){
 	sd->dir = SNRIGHT;
@@ -84,14 +84,13 @@ static inline void updateDirection(){
 	sd->inpQueue |= dir<<((sd->iqLen++)*2);
 }
 
-#define SHAPECLEAR(X) sd->shape[(X)>>2] &= ~(0x03<<(((X)&0x03)<<1))
-#define SHAPESET(X, V) sd->shape[(X)>>2] |= ((V)<<(((X)&0x03)<<1))
+#define SHAPESET(X, V) do {sd->shape[(X)>>2] &= ~(0x03<<(((X)&0x03)<<1));\
+							sd->shape[(X)>>2] |= ((V)<<(((X)&0x03)<<1));}while(0)
 #define SHAPEGET(X) ((sd->shape[(X)>>2] >> (((X)&0x03)<<1))&3)
 
 static inline void qCycle(){
 	
 	sd->head = GETTAIL;
-	SHAPECLEAR(sd->head);
 	SHAPESET(sd->head, sd->dir);
 }
 
@@ -114,8 +113,11 @@ static uint8_t testSnakeCollision(uint8_t x, uint8_t y){
 		uint8_t d = SHAPEGET(h);
 		d ^= 1;
 		FMOVE(cx,cy,d);
-		if(--h > sd->length)
+		
+		if(h == 0)
 			h  = sd->length-1;
+		else
+			--h;
 	}
 	return 0;
 }
@@ -173,14 +175,19 @@ static inline void drawSnake(){
 	uint8_t cx = sd->headX;
 	uint8_t cy = sd->headY;
 	uint8_t h = sd->head;
+	uint8_t len = 0;
 	for(uint8_t i = 0; i <sd->length; ++i){
-		canvas[cy][cx] = 255;
+		if((cx>15)||(cy>15)||(canvas[cy][cx] == 255))
+			DPOINT1;
+		canvas[cy][cx] = GAMMA(255 - (len++));
 		
 		uint8_t d = SHAPEGET(h);
 		d ^= 1;
 		FMOVE(cx,cy,d);
-		if(--h > sd->length)
+		if(h == 0)
 			h  = sd->length-1;
+		else
+			--h;
 	}
 	
 	canvas[sd->fruitY][sd->fruitX] = GAMMA(128);
@@ -191,39 +198,17 @@ void SnakeStop(){
 	
 }
 
-typedef struct{
-	uint16_t x;
-	uint8_t dx;//MIN 8  MAX 2
-	uint8_t y;
-	uint8_t b;
-	uint8_t db;
-} Strip;
-
 struct{
-	Strip strips[4];  //48b
 	uint8_t waves[8];
 	int8_t ttail;
 	uint8_t tickCount;
 } *stcd; //58b
-#define STRIPCOUNT (sizeof(stcd->strips)/sizeof(Strip))
 #define WAVESCOUNT (sizeof(stcd->waves)/sizeof(uint8_t))
 #define TITLESNAKELEN 16
 #define TITLESNAKETICKSPEED 15
 
-static void newStrip(Strip *s){
-	s->x = 0;
-	s->y = (xorshift32()&7) + TITLEMINHEIGHT;
-	s->dx = ((uint8_t)xorshift32())|64;
-	s->b = (xorshift32()&31);
-	s->db = XORRANGE(s->b>>3,s->b>>1);
-}
-
 void SnakeResetTitle(void* tmem){
 	stcd = tmem;
-	for (uint8_t i = 0; i < STRIPCOUNT; ++i){
-		newStrip(&stcd->strips[i]);
-		HIGH8(stcd->strips[i].x) = (xorshift32()&15)<<4;
-	}
 	for (uint8_t i = 0; i < WAVESCOUNT; ++i){
 		stcd->waves[i] = (xorshift32()&3)+1;
 	}
@@ -234,20 +219,6 @@ void SnakeResetTitle(void* tmem){
 #define DRAWIFSNAKE if((curind>stcd->ttail) && (curind<stcd->ttail + TITLESNAKELEN))\
 					canvas[cury][curx] = GAMMA(((curind-stcd->ttail)<<4));
 void SnakeDrawTitle(uint8_t dt){
-// 	for (uint8_t i = 0; i < STRIPCOUNT; ++i){
-// 		uint8_t curb = stcd->strips[i].b;
-// 		uint8_t curx = HIGH8(stcd->strips[i].x)>>4;
-// 		while((curb<=stcd->strips[i].b) && !(curx&(~15))){
-// 			canvas[stcd->strips[i].y][curx] = (curb);
-// 			curb -= stcd->strips[i].db;
-// 			curx -= 1;
-// 		}
-// 		stcd->strips[i].x += stcd->strips[i].dx * dt;
-// 		if(stcd->strips[i].x < stcd->strips[i].dx)
-// 			newStrip(&stcd->strips[i]);
-// 	}
-	
-	
 	uint8_t curx = 0;
 	uint8_t cury = 10;
 	int8_t curind = 0;
