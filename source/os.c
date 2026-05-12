@@ -25,8 +25,8 @@ struct{
 #undef X
 
 static uint8_t curGame = 0;
-void mainMenu(uint8_t dt);
-void (*running)(uint8_t dt) = mainMenu;
+void updateMainMenu(uint8_t dt);
+void (*running)(uint8_t dt);
 
 void osSetup(){
 	cli();
@@ -37,10 +37,19 @@ void osSetup(){
 	sei();
 }
 
-void mainMenu(uint8_t dt){
-	static uint8_t textT = 0;
-	static uint8_t textTCount = 0;
-	static uint8_t isInnit = 0;
+static uint8_t textT;
+static uint8_t textTCount;
+static uint8_t isInnit;
+
+void startMainMenu(){
+	textT = 0;
+	textTCount = 0;
+	isInnit = 0;
+	games[curGame]->resetTitle(&__heap_start);
+}
+
+void updateMainMenu(uint8_t dt){
+	
 	textTCount += dt;
 	
 	if (!isInnit){
@@ -56,23 +65,17 @@ void mainMenu(uint8_t dt){
 	}
 	
 	if (inputUp&INPLEFT) {
-		playNote(&dbeep1400, 128);
+		playNote(&N_dbeep1400, 128);
 		curGame = (curGame-1)%GAMESCOUNT;
-		textTCount = 0;
-		textT = 0;
-		isInnit = 0;
+		startMainMenu();
 	}
 	if (inputUp&INPRIGHT) {
-		playNote(&dbeep800, 128);
+		playNote(&N_dbeep800, 128);
 		curGame = (curGame+1)%GAMESCOUNT;
-		textTCount = 0;
-		textT = 0;
-		isInnit = 0;
+		startMainMenu();
 	}
 	if((inputUp&INPA)){
-		textTCount = 0;
-		textT = 0;
-		isInnit = 0;
+		playNote(&N_enter, 192);
 		games[curGame]->start(&__heap_start);
 		running = games[curGame]->update;
 	}
@@ -85,13 +88,13 @@ void mainMenu(uint8_t dt){
 	drawRunningTitle(textT, 0,
 				gameNames[curGame].name,gameNames[curGame].len);
 	
-	//Draw Title separator			
-	uint8_t temp = 1;
-	for (uint8_t i = 0; i < 8; ++i){
-		canvas[5][i] = temp;
-		canvas[5][15-i] = temp;
-		temp <<= 1;
-	}
+// 	//Draw Title separator			
+// 	uint8_t temp = 1;
+// 	for (uint8_t i = 0; i < 8; ++i){
+// 		canvas[5][i] = temp;
+// 		canvas[5][15-i] = temp;
+// 		temp <<= 1;
+// 	}
 	
 	//Draw bottom navigation dots
 	uint8_t mx = 0;
@@ -109,6 +112,7 @@ void mainMenu(uint8_t dt){
 }
 
 void osRun(){
+	osExitToMenu();
 	while (1){
 		running(dt);
 		flushScreenAndWait();
@@ -128,5 +132,6 @@ void osRun(){
 }
 
 void osExitToMenu(){
-	running = mainMenu;
+	startMainMenu();
+	running = updateMainMenu;
 }

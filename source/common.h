@@ -41,6 +41,7 @@ typedef int32_t fl32;
 
 
 uint32_t xorshift32(void);
+#define XORRANGE(MIN, MAX) ((xorshift32()%((MAX)-(MIN))) + (MIN));
 
 
 uint32_t lfsr32_8(void);

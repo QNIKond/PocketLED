@@ -148,7 +148,7 @@ static inline void drawSnake();
 void SnakeUpdate(uint8_t dt){
 	updateDirection();
 	sd->tickT += dt;
-	if(inputUp&INPA){ //sd->tickT >= TICKSPEED
+	if(sd->tickT >= SNAKETICKSPEED){ //sd->tickT >= TICKSPEED
 		sd->tickT = 0;
 		gameTick();
 	}
@@ -181,9 +181,99 @@ void SnakeStop(){
 	
 }
 
+typedef struct{
+	uint16_t x;
+	uint8_t dx;//MIN 8  MAX 2
+	uint8_t y;
+	uint8_t b;
+	uint8_t db;
+} Strip;
+
+struct{
+	Strip strips[4];  //48b
+	uint8_t waves[8];
+	int8_t ttail;
+	uint8_t tickCount;
+} *stcd; //58b
+#define STRIPCOUNT (sizeof(stcd->strips)/sizeof(Strip))
+#define WAVESCOUNT (sizeof(stcd->waves)/sizeof(uint8_t))
+#define TITLESNAKELEN 16
+#define TITLESNAKETICKSPEED 15
+
+static void newStrip(Strip *s){
+	s->x = 0;
+	s->y = (xorshift32()&7) + TITLEMINHEIGHT;
+	s->dx = ((uint8_t)xorshift32())|64;
+	s->b = (xorshift32()&31);
+	s->db = XORRANGE(s->b>>3,s->b>>1);
+}
+
+void SnakeResetTitle(void* tmem){
+	stcd = tmem;
+	for (uint8_t i = 0; i < STRIPCOUNT; ++i){
+		newStrip(&stcd->strips[i]);
+		HIGH8(stcd->strips[i].x) = (xorshift32()&15)<<4;
+	}
+	for (uint8_t i = 0; i < WAVESCOUNT; ++i){
+		stcd->waves[i] = (xorshift32()&3)+1;
+	}
+	stcd->ttail = xorshift32()&15;
+	stcd->tickCount = 0;
+}
+
+#define DRAWIFSNAKE if((curind>stcd->ttail) && (curind<stcd->ttail + TITLESNAKELEN))\
+					canvas[cury][curx] = GAMMA(((curind-stcd->ttail)<<4));
 void SnakeDrawTitle(uint8_t dt){
-	HLINE(6,6,9,255);
-	HLINE(9,6,9,255);
+// 	for (uint8_t i = 0; i < STRIPCOUNT; ++i){
+// 		uint8_t curb = stcd->strips[i].b;
+// 		uint8_t curx = HIGH8(stcd->strips[i].x)>>4;
+// 		while((curb<=stcd->strips[i].b) && !(curx&(~15))){
+// 			canvas[stcd->strips[i].y][curx] = (curb);
+// 			curb -= stcd->strips[i].db;
+// 			curx -= 1;
+// 		}
+// 		stcd->strips[i].x += stcd->strips[i].dx * dt;
+// 		if(stcd->strips[i].x < stcd->strips[i].dx)
+// 			newStrip(&stcd->strips[i]);
+// 	}
+	
+	
+	uint8_t curx = 0;
+	uint8_t cury = 10;
+	int8_t curind = 0;
+	uint8_t curwave = 0;
+	int8_t dir = 1;
+	while ((curwave<8) && (curind < stcd->ttail + TITLESNAKELEN)){
+		DRAWIFSNAKE;
+		for (uint8_t i = 0; i < stcd->waves[curwave]; ++i){
+			cury+=dir;
+			++curind;
+			DRAWIFSNAKE;
+		}
+		for (uint8_t i = 0; (i < 2)&&(curx<15); ++i){
+			++curx;
+			++curind;
+			DRAWIFSNAKE;
+		}
+		for (uint8_t i = 0; (i < stcd->waves[curwave])&&(curx<15); ++i){
+			cury-=dir;
+			++curind;
+			DRAWIFSNAKE;
+		}
+		++curwave;
+		dir = -dir;
+	}
+	if(++stcd->tickCount > TITLESNAKETICKSPEED){
+		stcd->tickCount = 0;
+		++stcd->ttail;
+		if(stcd->ttail > curind){
+			stcd->ttail = -TITLESNAKELEN;
+			for (uint8_t i = 0; i < WAVESCOUNT; ++i){
+				stcd->waves[i] = (xorshift32()&3)+1;
+			}
+		}
+	}
+	
 }
 
 GAMEIMPLEMENT(Snake)

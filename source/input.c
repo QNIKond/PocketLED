@@ -49,6 +49,7 @@ void updateInput(uint8_t dt){
 	#ifdef STAND
 		inputRaw &= 3;
 	#else
+		inputRaw |= 1<<7;
 		inputRaw ^= ISPINP(D,2)<<5;
 	#endif // STAND
 

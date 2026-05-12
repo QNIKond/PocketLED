@@ -22,7 +22,7 @@ struct{
 	uint8_t holdEnabled;
 	uint8_t drop;
 	
-} *td; //71b (72b)
+} *td; //92b
 
 enum{
 	JTETRO=1,//111111
@@ -314,8 +314,44 @@ void TetrisStop(){
 	osExitToMenu();
 }
 
+struct{
+	Tetro ts[3];
+	uint8_t tickCount;
+} *ttcd; //31b
+#define TSCOUNT (sizeof(ttcd->ts)/sizeof(Tetro))
+#define TITLETETRISTICKSPEED 40
+
+void TetrisResetTitle(void* tmem){
+	ttcd = tmem;
+	for (uint8_t i = 0; i < TSCOUNT; ++i){
+		do{
+			ttcd->ts[i].type = ((uint8_t)xorshift32())&7;
+		}while (!ttcd->ts[i].type);
+		buildTShape(&ttcd->ts[i]);
+		ttcd->ts[i].pos.x = xorshift32()&15;
+		ttcd->ts[i].pos.y = TITLEMINHEIGHT + i*3;
+	}
+	ttcd->tickCount = 0;
+}
+
 void TetrisDrawTitle(uint8_t dt){
-	
+	++ttcd->tickCount;
+	for (uint8_t i = 0; i < TSCOUNT; ++i){
+		drawTetro(&ttcd->ts[i], 16);
+		if(ttcd->tickCount > TITLETETRISTICKSPEED){
+			
+			if(++ttcd->ts[i].pos.y > 16){
+				do{
+					ttcd->ts[i].type = ((uint8_t)xorshift32())&7;
+				}while (!ttcd->ts[i].type);
+				buildTShape(&ttcd->ts[i]);
+				ttcd->ts[i].pos.x = xorshift32()&15;
+				ttcd->ts[i].pos.y = TITLEMINHEIGHT+1;
+			}
+		}
+	}
+	if(ttcd->tickCount > TITLETETRISTICKSPEED)
+		ttcd->tickCount = 0;
 }
 
 GAMEIMPLEMENT(Tetris)
