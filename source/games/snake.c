@@ -9,7 +9,7 @@
 #define SNDOWN 0b01
 #define SNRIGHT 0b11
 
-#define SNAKETICKSPEED 25
+#define SNAKETICKSPEED 40
 
 static struct{
 	uint8_t dir;
@@ -22,7 +22,7 @@ static struct{
 	uint8_t tailX;
 	uint8_t tailY;
 	
-	uint16_t field[16]; //32b
+	//uint16_t field[16]; //32b
 	
 	uint8_t inpQueue;
 	uint8_t iqLen;
@@ -47,10 +47,6 @@ static void reset(){
 	sd->headY = 7;
 	sd->tailX = 2;
 	sd->tailY = 7;
-	
-	for(uint8_t i = 0; i < 16; ++i)
-		sd->field[i] = 0;
-	sd->field[7] = 0b111<<2;
 	
 	sd->inpQueue = 0;
 	sd->iqLen = 0;
@@ -99,6 +95,22 @@ static inline void qAdd(){
 	//qCycle();
 }
 
+static uint8_t testSnakeCollision(uint8_t x, uint8_t y){
+	uint8_t cx = sd->headX;
+	uint8_t cy = sd->headY;
+	uint8_t h = sd->head;
+	for(uint8_t i = 0; i <sd->length; ++i){
+		if((cx==x)&&(cy==y))
+			return 1;
+		uint8_t d = SHAPEGET(h);
+		d ^= 1;
+		FMOVE(cx,cy,d);
+		if(--h > sd->length)
+			h  = sd->length-1;
+	}
+	return 0;
+}
+
 static inline void gameTick(){
 	if(sd->iqLen){
 		sd->dir = sd->inpQueue&0x03;
@@ -109,31 +121,19 @@ static inline void gameTick(){
 	uint8_t tx = sd->headX;
 	uint8_t ty = sd->headY;
 	FMOVE(tx,ty, sd->dir);
-	if((tx>15)||(ty>15)||((sd->field[ty]>>tx)&1)){//
+	if((tx>15)||(ty>15)||testSnakeCollision(tx,ty)){//
 		reset();
 		return;
 	}
 	sd->headX = tx;
 	sd->headY = ty;
-	
-	sd->field[sd->headY] |= 1<<sd->headX;
-	sd->field[sd->tailY] &= ~(1<<sd->tailX);
-	
-	uint8_t ttt = 0;
-	for (uint8_t i = 0; i < 16; ++i){
-		for(uint8_t j = 0; j < 16; ++j){
-			ttt += (sd->field[i]>>j)&1;
-		}
-	}
-	
-	
-	
+
 	if((sd->headX == sd->fruitX) && (sd->headY == sd->fruitY)){
 		qAdd();
 		do{
 			sd->fruitX = xorshift32()&15;
 			sd->fruitY = xorshift32()&15;
-		} while (sd->field[sd->fruitY]>>sd->fruitX&1);
+		} while (testSnakeCollision(sd->fruitX, sd->fruitY));
 	}
 	else{
 		uint8_t tail = (sd->head+2<sd->length ? sd->head+2 : sd->head+2-sd->length);
