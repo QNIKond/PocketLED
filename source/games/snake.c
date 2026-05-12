@@ -33,6 +33,9 @@ static struct{
 	uint8_t fruitX;
 	uint8_t fruitY;
 	
+	uint8_t invFrame;
+	
+	uint8_t colorStep;
 } *sd;
 
 //#define FMOVE(X,Y, D) ((D)&2 ? (X) : (Y)) += (((D)&1)<<1) - 1;
@@ -55,6 +58,10 @@ static void reset(){
 	
 	sd->fruitX = 12;
 	sd->fruitY = 7;
+	
+	sd->invFrame = 0;
+	
+	sd->colorStep = 255/sd->length;
 }
 
 void SnakeStart(void* mem){
@@ -133,7 +140,10 @@ static inline void gameTick(){
 	uint8_t ty = sd->headY;
 	FMOVE(tx,ty, sd->dir);
 	if((tx>15)||(ty>15)||testSnakeCollision(tx,ty)){//
-		reset();
+		if(!sd->invFrame)
+			sd->invFrame = 1;
+		else
+			reset();
 		return;
 	}
 	sd->headX = tx;
@@ -141,6 +151,7 @@ static inline void gameTick(){
 
 	if((sd->headX == sd->fruitX) && (sd->headY == sd->fruitY)){
 		qAdd();
+		sd->colorStep = 255/sd->length;
 		do{
 			sd->fruitX = xorshift32()&15;
 			sd->fruitY = xorshift32()&15;
@@ -175,12 +186,12 @@ static inline void drawSnake(){
 	uint8_t cx = sd->headX;
 	uint8_t cy = sd->headY;
 	uint8_t h = sd->head;
-	uint8_t len = 0;
+	uint8_t col = 255;
 	for(uint8_t i = 0; i <sd->length; ++i){
 		if((cx>15)||(cy>15)||(canvas[cy][cx] == 255))
 			DPOINT1;
-		canvas[cy][cx] = GAMMA(255 - (len++));
-		
+		canvas[cy][cx] = GAMMA(col);
+		col -= sd->colorStep;
 		uint8_t d = SHAPEGET(h);
 		d ^= 1;
 		FMOVE(cx,cy,d);
