@@ -37,11 +37,61 @@ void osSetup(){
 	sei();
 }
 
+uint8_t isTransitioning;
+void (*dest)(uint8_t dt);
+void (*destStart)(void* mem);
+#define TRNTIME_MS 300
+//#define TRNSTEP 32000*256/122*TRNTIME_MS
+#define TRNSTEP 512000UL*256/(122UL*TRNTIME_MS)
+uint16_t curTrnTime;
+uint8_t trnDir;
+
+static void startTransition(void (*d)(uint8_t dt), void (*ds)(void* mem)){
+	if(isTransitioning)
+		return;
+	isTransitioning = 1;
+	dest = d;
+	destStart = ds;
+	curTrnTime = 0;
+	trnDir = 0;
+}
+
+static void updateTransition(uint8_t dt){
+	curTrnTime += TRNSTEP;
+	if(curTrnTime < TRNSTEP){
+		
+		if(trnDir){
+			isTransitioning = 0;
+			curTrnTime = 255<<8;
+		}
+		else{
+			running = dest;
+			destStart(&__heap_start);
+			trnDir = 1;
+			curTrnTime = 0;
+		}
+	}
+	uint8_t maxc;
+	if(trnDir)
+		maxc = 255-HIGH8(curTrnTime);
+	else
+		maxc = HIGH8(curTrnTime);
+	uint8_t c = maxc;
+	uint8_t cy = 15;
+	while(c>16){
+		for (uint8_t i = 0; i < 16; ++i)
+			canvas[cy][i] = lerp(canvas[cy][i], c, maxc);
+		--cy;
+		c -= 16;
+	}
+	
+}
+
 static uint8_t textT;
 static uint8_t textTCount;
 static uint8_t isInnit;
 
-void startMainMenu(){
+void resetMainMenu(){
 	textT = 0;
 	textTCount = 0;
 	isInnit = 0;
@@ -67,17 +117,17 @@ void updateMainMenu(uint8_t dt){
 	if (inputUp&INPLEFT) {
 		playNote(&N_dbeep1400, 128);
 		curGame = (curGame-1)%GAMESCOUNT;
-		startMainMenu();
+		resetMainMenu();
 	}
 	if (inputUp&INPRIGHT) {
 		playNote(&N_dbeep800, 128);
 		curGame = (curGame+1)%GAMESCOUNT;
-		startMainMenu();
+		resetMainMenu();
 	}
 	if((inputUp&INPA)){
 		playNote(&N_enter, 192);
-		games[curGame]->start(&__heap_start);
-		running = games[curGame]->update;
+		startTransition(games[curGame]->update, games[curGame]->start);
+		//running = games[curGame]->update;
 	}
 	
 	xorshift32();
@@ -115,6 +165,8 @@ void osRun(){
 	osExitToMenu();
 	while (1){
 		running(dt);
+		if(isTransitioning)
+			updateTransition(dt);
 		flushScreenAndWait();
 		updateInput(dt);
 		dt = 1;
@@ -132,6 +184,6 @@ void osRun(){
 }
 
 void osExitToMenu(){
-	startMainMenu();
+	resetMainMenu();
 	running = updateMainMenu;
 }

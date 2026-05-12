@@ -9,7 +9,7 @@
 #define SNDOWN 0b01
 #define SNRIGHT 0b11
 
-#define SNAKETICKSPEED 122
+#define SNAKETICKSPEED 25
 
 static struct{
 	uint8_t dir;
