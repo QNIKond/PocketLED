@@ -19,6 +19,10 @@ extern uint64_t dbgFlags;
 #define DRETRIEVE2(X) retrieveParam(0x12,0x02, X)
 #define DRETRIEVE3(X) retrieveParam(0x13,0x02, X)
 #define DRETRIEVE4(X) retrieveParam(0x14,0x02, X)
+#define DUPDATE1(X) updateParam(0x15, 0x02, &X)
+#define DUPDATE2(X) updateParam(0x16, 0x02, &X)
+#define DUPDATE3(X) updateParam(0x17, 0x02, &X)
+#define DUPDATE4(X) updateParam(0x18, 0x02, &X)
 
 void UARTSetup();
 

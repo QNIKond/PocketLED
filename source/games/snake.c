@@ -9,7 +9,8 @@
 #define SNDOWN 0b01
 #define SNRIGHT 0b11
 
-#define SNAKETICKSPEED 40
+uint8_t debugSpeed = 30;
+#define SNAKETICKSPEED debugSpeed
 
 static struct{
 	uint8_t dir;
@@ -62,17 +63,25 @@ void SnakeStart(void* mem){
 	//sendMsg(0x11);
 }
 
+#define GETLASTDIR (sd->iqLen ? (sd->inpQueue>>(sd->iqLen-1))&3 : sd->dir)
 static inline void updateDirection(){
-	if(sd->iqLen >= 4)
-	return;
+	
+		uint8_t dir;
 	if(inputDown&INPUP)
-	sd->inpQueue |= SNUP<<((sd->iqLen++)*2);
-	if(inputDown&INPLEFT)
-	sd->inpQueue |= SNLEFT<<((sd->iqLen++)*2);
-	if(inputDown&INPDOWN)
-	sd->inpQueue |= SNDOWN<<((sd->iqLen++)*2);
-	if(inputDown&INPRIGHT)
-	sd->inpQueue |= SNRIGHT<<((sd->iqLen++)*2);
+		dir = SNUP;
+	else if(inputDown&INPLEFT)
+		dir = SNLEFT;
+	else if(inputDown&INPDOWN)
+		dir = SNDOWN;
+	else if(inputDown&INPRIGHT)
+		dir = SNRIGHT;
+	else
+		return;
+
+	if((sd->iqLen >= 4) || ((dir&2) == (GETLASTDIR&2)))
+		return;
+	
+	sd->inpQueue |= dir<<((sd->iqLen++)*2);
 }
 
 #define SHAPECLEAR(X) sd->shape[(X)>>2] &= ~(0x03<<(((X)&0x03)<<1))
@@ -154,6 +163,7 @@ void SnakeUpdate(uint8_t dt){
 	}
 	drawSnake();
 	
+	DUPDATE1(debugSpeed);
 	
 	if(inputUp&INPESC)
 		SnakeStop();
