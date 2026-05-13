@@ -143,16 +143,11 @@ static inline void nextStage(){
 		curSlope = curNote.decaySlope;
 	}
 	else{
-		++repeats;
-		
-		if((curNote.repeat != 0xFF) && (repeats >= curNote.repeat+1)){
-			
-			endNote();
+		if(curNote.chain){
+			playNote(curNote.chain, curPriority);
 		}
 		else{
-			uint8_t t = repeats;
-			resetSound();
-			repeats = t;
+			endNote();
 		}
 	}
 }

@@ -7,6 +7,7 @@ extern const Note N_dbeep800;
 extern const Note N_dbeep1400;
 extern const Note allNote;
 extern const Note N_enter;
+extern const Note N_enter_2;
 
 #endif /*NOTES_H_*/
 	
@@ -30,10 +31,20 @@ const Note allNote PROGMEM = {
 	SUSTAINCURVE(300, 128),
 	DECAYCURVE(300, 128),
 	.grain = 200,
-	.repeat = 1
+	.chain = &allNote
 };
 
 const Note N_enter PROGMEM = {
+	FREQTOSTEP(1500),
+	SLIDECURVE(600, 2000, -2000),
+	RETRIGGER(0, 2000),
+	
+	ATTACKCURVE(300),
+	DECAYCURVE(100, 255),
+	.chain = &N_enter_2,
+};
+
+const Note N_enter_2 PROGMEM = {
 	FREQTOSTEP(800),
 	SLIDECURVE(600, 2000, -2000),
 	RETRIGGER(0, 1200),

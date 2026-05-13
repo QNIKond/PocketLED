@@ -169,7 +169,7 @@ void osRun(){
 			updateTransition(dt);
 		flushScreenAndWait();
 		updateInput(dt);
-		dt = 1;
+		dt = 2;
 		
 		if (((inputDown&INPUP) && (inputRaw&INPDOWN))||
 		((inputDown&INPDOWN) && (inputRaw&INPUP))){

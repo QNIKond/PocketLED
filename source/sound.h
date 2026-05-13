@@ -23,7 +23,7 @@
 #define RETRIGGER(LOW, HIGH)		.lowRetrigger = FREQTOSTEP(LOW), \
 									.highRetrigger = FREQTOSTEP(HIGH) \
 
-typedef struct{
+typedef struct _Note{
 	//Frequency
 	uint16_t freqStep; //freqStep * [half the number of modulation periods in one period] = 2^16
 	int32_t slide; //Current freqStep will be incremented by slide every period
@@ -41,8 +41,8 @@ typedef struct{
 	
 	//Misc
 	uint8_t grain;	//How much noise is added
-	uint8_t repeat; //0xFF Toggle mode
-					//N Repeat N times after first one 
+	const struct _Note* chain;
+					 
 } Note;
 
 extern uint8_t volume;
@@ -53,7 +53,5 @@ void soundSetup();
 void playNote(const Note *note, uint8_t priority);
 
 void endNote();
-
-extern Note asdf;
 
 #endif /* SOUND_H_ */
