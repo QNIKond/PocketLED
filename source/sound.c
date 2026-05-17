@@ -92,7 +92,7 @@ static inline void resetSound(){
 	curSlope = curNote.attackSlope;
 	targetMPeriodCount = curNote.attackTime;
 	mperiodCounter = 0;
-	curStage = 0;
+ 	curStage = 0;
 	repeats = 0;
 	
 	OCR1BL = 3;
@@ -149,22 +149,29 @@ static inline void updateFrequency(uint8_t t){
 static inline void nextStage(){
 	++curStage;
 	mperiodCounter = 0;
-	if(curStage == 1){
-		curMq = 255;
-		targetMPeriodCount = curNote.sustainTime;
-		curSlope = curNote.sustainSlope;
+	if((curStage == 1)){
+		if(curNote.sustainTime){
+			curMq = 255;
+			targetMPeriodCount = curNote.sustainTime;
+			curSlope = curNote.sustainSlope;
+			return;
+		}
+		++curStage;
 	}
-	else if (curStage == 2){
-		targetMPeriodCount = curNote.decayTime;
-		curSlope = curNote.decaySlope;
+	if ((curStage == 2)){
+		if(curNote.decayTime){
+			targetMPeriodCount = curNote.decayTime;
+			curSlope = curNote.decaySlope;
+			return;
+		}
+		++curStage;
+	}
+	
+	if(curNote.chain){
+		playNote(curNote.chain, curPriority);
 	}
 	else{
-		if(curNote.chain){
-			playNote(curNote.chain, curPriority);
-		}
-		else{
-			endNote();
-		}
+		endNote();
 	}
 }
 
