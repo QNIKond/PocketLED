@@ -11,7 +11,6 @@
 #include "notes.h"
 #include "graphics.h"
 
-
 static volatile uint8_t dt;
 
 #define X(A) &A,
@@ -115,7 +114,7 @@ void updateMainMenu(uint8_t dt){
 	}
 	
 	if (inputUp&INPLEFT) {
-		playNote(&N_dbeep1400, 128);
+		playNote(&N_dbeep800, 128, FREQSTEP(1400));
 		curGame = (curGame-1)%GAMESCOUNT;
 		resetMainMenu();
 	}
@@ -169,8 +168,7 @@ void osRun(){
 			updateTransition(dt);
 		flushScreenAndWait();
 		updateInput(dt);
-		dt = 2;
-		
+		dt = 1;
 		if (((inputDown&INPUP) && (inputRaw&INPDOWN))||
 		((inputDown&INPDOWN) && (inputRaw&INPUP))){
 			isMuted ^= 1;

@@ -98,7 +98,22 @@ static inline void resetSound(){
 	OCR1BL = 3;
 }
 
-void playNote(const Note *note, uint8_t priority){
+#define APPLYNOTEMODPARAM(P) if(mod->P) curNote.P = mod->P
+static inline void applyMod(Note *mod){
+	APPLYNOTEMODPARAM(freqStep);
+	APPLYNOTEMODPARAM(slide);
+	APPLYNOTEMODPARAM(dslide);
+	APPLYNOTEMODPARAM(lowRetrigger);
+	APPLYNOTEMODPARAM(highRetrigger);
+	APPLYNOTEMODPARAM(attackTime);
+	APPLYNOTEMODPARAM(attackSlope);
+	APPLYNOTEMODPARAM(sustainTime);
+	APPLYNOTEMODPARAM(sustainSlope);
+	APPLYNOTEMODPARAM(decayTime);
+	APPLYNOTEMODPARAM(decaySlope);
+}
+
+void _playNote(const Note *note, uint8_t priority, Note mod){
 	if (isMuted)
 		return;
 	enablePin();
@@ -107,6 +122,7 @@ void playNote(const Note *note, uint8_t priority){
 	
 	curPriority = priority;
 	memcpy_P(&curNote, note,sizeof(curNote));
+	applyMod(&mod);
 	resetSound();
 	startMainHalfPeriod();
 	

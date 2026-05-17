@@ -50,7 +50,8 @@ extern uint8_t isMuted;
 
 void soundSetup();
 
-void playNote(const Note *note, uint8_t priority);
+#define playNote(T,P, ...) _playNote(T,P, (Note){__VA_ARGS__})
+void _playNote(const Note *note, uint8_t priority, Note mod);
 
 void endNote();
 
