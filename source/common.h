@@ -18,7 +18,7 @@
 #define TOGGLEP(X,Y) PORT##X ^= 1<<(PORT##X##Y)
 #define BLINKP(X,Y) do {TURNPON(X,Y); TURNPOFF(X,Y);} while(0);
 
-#define STAND
+//#define STAND
 
 typedef struct {
 	uint8_t x;
