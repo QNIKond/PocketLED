@@ -150,12 +150,12 @@ static inline void gameTick(){
 	sd->headY = ty;
 
 	if((sd->headX == sd->fruitX) && (sd->headY == sd->fruitY)){
-		qAdd();
-		sd->colorStep = 255/sd->length;
 		do{
 			sd->fruitX = xorshift32()&15;
 			sd->fruitY = xorshift32()&15;
 		} while (testSnakeCollision(sd->fruitX, sd->fruitY));
+		qAdd();
+		sd->colorStep = 255/sd->length;
 	}
 	else{
 		uint8_t tail = (sd->head+2<sd->length ? sd->head+2 : sd->head+2-sd->length);

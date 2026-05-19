@@ -14,7 +14,8 @@ extern uint8_t __heap_start;
 
 #define XGAMES\
 			X(Snake)\
-			X(Tetris)
+			X(Tetris)\
+			X(Maze)
 
 #define X(A) extern Game A;
 XGAMES

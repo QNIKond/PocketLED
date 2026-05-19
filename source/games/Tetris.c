@@ -346,7 +346,7 @@ void TetrisDrawTitle(uint8_t dt){
 				}while (!ttcd->ts[i].type);
 				buildTShape(&ttcd->ts[i]);
 				ttcd->ts[i].pos.x = xorshift32()&15;
-				ttcd->ts[i].pos.y = TITLEMINHEIGHT+1;
+				ttcd->ts[i].pos.y = TITLEMINHEIGHT-1;
 			}
 		}
 	}

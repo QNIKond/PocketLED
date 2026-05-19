@@ -25,6 +25,11 @@ typedef struct {
 	uint8_t y;
 	} v2;
 #define V2ADD(U, V) do{(U).x += (V).x; (U).y += (V).y;}while(0);
+typedef struct {
+	uint8_t x;
+	uint8_t y;
+	uint8_t z;
+} v3;
 	
 typedef union {
 	uint16_t u16;
