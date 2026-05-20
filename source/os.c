@@ -115,7 +115,7 @@ void updateMainMenu(uint8_t dt){
 	
 	if (inputUp&INPLEFT) {
 		playNote(&N_dbeep800, 128, FREQSTEP(1400));
-		curGame = (curGame-1)%GAMESCOUNT;
+		curGame =(curGame+GAMESCOUNT-1)%GAMESCOUNT;
 		resetMainMenu();
 	}
 	if (inputUp&INPRIGHT) {

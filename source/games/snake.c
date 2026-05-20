@@ -3,6 +3,7 @@
 #include "../graphics.h"
 #include "../UARTDebug.h"
 #include "../input.h"
+#include "../notes.h"
 
 #define SNUP 0b00
 #define SNLEFT 0b10
@@ -36,7 +37,7 @@ static struct{
 	uint8_t invFrame;
 	
 	uint8_t colorStep;
-} *sd;
+} *sd; //78b
 
 //#define FMOVE(X,Y, D) ((D)&2 ? (X) : (Y)) += (((D)&1)<<1) - 1;
 #define FMOVE(X,Y, D) if((D)&0b10) (X) += (((D)&1)<<1) - 1; else (Y) += (((D)&1)<<1) - 1;
@@ -87,7 +88,7 @@ static inline void updateDirection(){
 
 	if((sd->iqLen >= 4) || ((dir&2) == (GETLASTDIR&2)))
 		return;
-	
+	playNote(&N_Smove, 128);
 	sd->inpQueue |= dir<<((sd->iqLen++)*2);
 }
 
@@ -142,8 +143,10 @@ static inline void gameTick(){
 	if((tx>15)||(ty>15)||testSnakeCollision(tx,ty)){//
 		if(!sd->invFrame)
 			sd->invFrame = 1;
-		else
+		else{
+			playNote(&N_death,200);
 			reset();
+		}
 		return;
 	}
 	sd->headX = tx;
@@ -154,6 +157,7 @@ static inline void gameTick(){
 			sd->fruitX = xorshift32()&15;
 			sd->fruitY = xorshift32()&15;
 		} while (testSnakeCollision(sd->fruitX, sd->fruitY));
+		playNote(&N_eat,192);
 		qAdd();
 		sd->colorStep = 255/sd->length;
 	}

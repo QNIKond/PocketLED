@@ -3,6 +3,7 @@
 #include "../graphics.h"
 #include "../UARTDebug.h"
 #include "../input.h"
+#include "../notes.h"
 #include <avr/pgmspace.h>
 
 typedef struct  {
@@ -121,16 +122,19 @@ static uint8_t testCollision(Tetro *t){
 static inline void moveT(){
 	Tetro temp = td->curT;
 	if (inputDown&INPLEFT){
+		playNote(&N_Tmove,128);
 		--temp.pos.x;
 		if(testCollision(&temp))
 			return;
 	}
 	else if (inputDown&INPRIGHT){
+		playNote(&N_Tmove,128);
 		++temp.pos.x;
 		if(testCollision(&temp))
 			return;
 	}
 	if ((inputDown&INPA) || (inputDown&INPB)){
+		playNote(&N_rotate, 128);
 		uint8_t rdir = inputDown&INPA ? -1 : 1;
 		temp.rot = (temp.rot+rdir)&3;
 		for (uint8_t i = 0; i < 3; ++i){
@@ -159,6 +163,7 @@ static inline void moveT(){
 }
 
 static inline void removeRow(uint8_t y){
+	playNote(&N_eat, 192);
 	uint16_t *cc = (uint16_t*)td->col;
 	uint16_t mask = (1<<y)-1;
 	for (uint8_t i = 0; i < 30; ++i)
@@ -198,13 +203,19 @@ static inline void fallT(){
 			glide = 1;
 		else{
 			if(td->curT.pos.y>20){
+				playNote(&N_death,200);
 				resetTetris();
 				return;
 			}
+			if(td->drop)
+				playNote(&N_hardDrop, 192);
+			else
+				playNote(&N_softDrop, 192);
 			setPoint(td->curT.pos.x, td->curT.pos.y, td->curT.type);
 			for (uint8_t i = 0; i < 3; ++i){
 				uint8_t y = (td->curT.pos.y + td->curT.shape[i].y);
 				if(y>20){
+					playNote(&N_death,200);
 					resetTetris();
 					return;
 				}
@@ -262,8 +273,10 @@ void TetrisUpdate(uint8_t dt){
 		td->holdT.pos = (v2){13, 9};
 		td->holdEnabled = 0;
 	}
-	if(inputDown&INPDOWN)
+	if(inputDown&INPDOWN){
+		playNote(&N_fastFall,192);
 		td->drop = 1;
+	}
 	if((++td->tickCount > TETRISTICKSPEED) || td->drop){
 		td->tickCount = 0;
 		fallT();
