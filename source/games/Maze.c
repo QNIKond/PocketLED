@@ -254,12 +254,29 @@ void MazeStop(){
 	osExitToMenu();
 }
 
+struct{
+	uint8_t xWalls[4];
+	uint8_t yWalls[4];
+} *stmd;
+
 void MazeResetTitle(void *mem){
-	
+	stmd = mem;
+	for (uint8_t i = 0; i < 4; ++i){
+		stmd->xWalls[i] = xorshift32();
+		stmd->yWalls[i] = xorshift32();
+	}
 }
 
-void MazeDrawTitle(uint8_t dt){
-	
+void MazeDrawTitle(uint8_t dt){//((G[(Y)]>>(X))&1)
+	for (uint8_t i = 0; i < 4; ++i){
+		for (uint8_t j = 0; j < 8; ++j){
+			if(GETPOINT(stmd->xWalls, j,i,0))
+				canvas[(i<<1)+6][(j<<1)+1] = GAMMA(128);
+			if(GETPOINT(stmd->yWalls, j,i,0))
+				canvas[(i<<1)+6+1][j<<1] = GAMMA(128);
+			canvas[(i<<1)+6+1][(j<<1)+1] = GAMMA(128);
+		}
+	}
 }
 
 GAMEIMPLEMENT(Maze)
