@@ -10,6 +10,7 @@
 #include "sound.h"
 #include "notes.h"
 #include "graphics.h"
+#include "save.h"
 
 static volatile uint8_t dt;
 
@@ -22,35 +23,48 @@ struct{
 	uint8_t len;
 } gameNames[] = {XGAMES};
 #undef X
+uint8_t gamesCount = (sizeof(games)/sizeof(Game*));
 
 static uint8_t curGame = 0;
 void updateMainMenu(uint8_t dt);
 void (*running)(uint8_t dt);
 
+void resetMainMenu();
 void osSetup(){
 	cli();
 	inputSetup();
 	LEDMatrixSetup(&dt);
 	UARTSetup();
 	soundSetup();
+	saveSetup();
+	
+	resetMainMenu();
+	running = updateMainMenu;
 	sei();
 }
 
+static void startGame(Game *g){
+	running = g->update;
+	*(g->memory) = &__heap_start;
+	uint8_t arg = 0;
+	//restoreGame(g, &__heap_start);
+	if(!restoreGame(g, &__heap_start))
+		arg = OSRESET;
+	g->start(arg);
+}
+
 uint8_t isTransitioning;
-void (*dest)(uint8_t dt);
-void (*destStart)(void* mem);
+Game *trnGame;
 #define TRNTIME_MS 300
-//#define TRNSTEP 32000*256/122*TRNTIME_MS
 #define TRNSTEP 512000UL*256/(122UL*TRNTIME_MS)
 uint16_t curTrnTime;
 uint8_t trnDir;
 
-static void startTransition(void (*d)(uint8_t dt), void (*ds)(void* mem)){
+static void startTransition(Game *game){
 	if(isTransitioning)
 		return;
 	isTransitioning = 1;
-	dest = d;
-	destStart = ds;
+	trnGame = game;
 	curTrnTime = 0;
 	trnDir = 0;
 }
@@ -64,8 +78,7 @@ static void updateTransition(uint8_t dt){
 			curTrnTime = 255<<8;
 		}
 		else{
-			running = dest;
-			destStart(&__heap_start);
+			startGame(trnGame);
 			trnDir = 1;
 			curTrnTime = 0;
 		}
@@ -94,7 +107,8 @@ void resetMainMenu(){
 	textT = 0;
 	textTCount = 0;
 	isInnit = 0;
-	games[curGame]->resetTitle(&__heap_start);
+	*(games[curGame]->tcmemory) = (uint8_t*)((uint16_t)&__heap_start + games[curGame]->memSize);
+	games[curGame]->resetTitle();
 }
 
 void updateMainMenu(uint8_t dt){
@@ -115,17 +129,17 @@ void updateMainMenu(uint8_t dt){
 	
 	if (inputUp&INPLEFT) {
 		playNote(&N_dbeep800, 128, FREQSTEP(1400));
-		curGame =(curGame+GAMESCOUNT-1)%GAMESCOUNT;
+		curGame =(curGame+gamesCount-1)%gamesCount;
 		resetMainMenu();
 	}
 	if (inputUp&INPRIGHT) {
 		playNote(&N_dbeep800, 128);
-		curGame = (curGame+1)%GAMESCOUNT;
+		curGame = (curGame+1)%gamesCount;
 		resetMainMenu();
 	}
 	if((inputUp&INPA)){
 		playNote(&N_enter, 192);
-		startTransition(games[curGame]->update, games[curGame]->start);
+		startTransition(games[curGame]);
 		//running = games[curGame]->update;
 	}
 	
@@ -154,7 +168,7 @@ void updateMainMenu(uint8_t dt){
 	
 	//Draw bottom navigation dots
 	uint8_t mx = 0;
-	for (uint8_t i = 0; i < GAMESCOUNT; ++i){
+	for (uint8_t i = 0; i < gamesCount; ++i){
 		if (i == curGame){
 			canvas[15][mx] = 255;
 			canvas[15][mx+1] = 255;
@@ -168,7 +182,6 @@ void updateMainMenu(uint8_t dt){
 }
 
 void osRun(){
-	osExitToMenu();
 	while (1){
 		running(dt);
 		if(isTransitioning)
@@ -180,15 +193,21 @@ void osRun(){
 		((inputDown&INPDOWN) && (inputRaw&INPUP))){
 			isMuted ^= 1;
 		}
+		if (((inputDown&INPB) && (inputRaw&INPDOWN))||
+		((inputDown&INPDOWN) && (inputRaw&INPB))){
+			eraseSave(games[curGame]);
+			DPOINT4;
+		}
 		
 		if(dbgFlags&(1<<0x02)){
 			dbgFlags &= ~(1<<0x02);
-			osExitToMenu();
+			osSaveAndExit();
 		}
 	}
 }
 
-void osExitToMenu(){
+void osSaveAndExit(){
+	saveGame(games[curGame]);
 	resetMainMenu();
 	running = updateMainMenu;
 }

@@ -19,7 +19,7 @@ struct{
 	v3 player;
 	uint8_t atimer;
 	uint8_t depth;
-} *md;
+} *md; //197b
 
 #define NVIS	0b000
 #define DIRX	0b010
@@ -147,13 +147,11 @@ static void resetMaze(){
 	}
 }
 
-void MazeStart(void *mem){
-	
-	md = mem;
-	
-	md->depth = 1;
-
-	resetMaze();
+void MazeStart(uint8_t arg){
+	if(arg&OSRESET){
+		md->depth = 1;
+		resetMaze();
+	}
 }
 
 static inline void drawMaze(uint8_t dt);
@@ -251,7 +249,7 @@ static inline void drawMaze(uint8_t dt){
 }
 
 void MazeStop(){
-	osExitToMenu();
+	osSaveAndExit();
 }
 
 struct{
@@ -259,8 +257,7 @@ struct{
 	uint8_t yWalls[4];
 } *stmd;
 
-void MazeResetTitle(void *mem){
-	stmd = mem;
+void MazeResetTitle(){
 	for (uint8_t i = 0; i < 4; ++i){
 		stmd->xWalls[i] = xorshift32();
 		stmd->yWalls[i] = xorshift32();
@@ -279,4 +276,4 @@ void MazeDrawTitle(uint8_t dt){//((G[(Y)]>>(X))&1)
 	}
 }
 
-GAMEIMPLEMENT(Maze)
+GAMEIMPLEMENT(Maze, md, stmd)

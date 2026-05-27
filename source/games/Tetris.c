@@ -23,7 +23,7 @@ struct{
 	uint8_t holdEnabled;
 	uint8_t drop;
 	
-} *td; //92b
+} *td; //93b
 
 enum{
 	JTETRO=1,//111111
@@ -83,9 +83,9 @@ static void resetTetris(){
 	td->drop = 0;
 }
 
-void TetrisStart(void* mem){
-	td = mem;
-	resetTetris();
+void TetrisStart(uint8_t arg){
+	if(arg&OSRESET)
+		resetTetris();
 }
 
 static void setPoint(uint8_t x, uint8_t y, uint8_t c){
@@ -324,47 +324,46 @@ static inline void drawTetris(uint8_t dt){
 }
 
 void TetrisStop(){
-	osExitToMenu();
+	osSaveAndExit();
 }
 
 struct{
 	Tetro ts[3];
 	uint8_t tickCount;
-} *ttcd; //31b
-#define TSCOUNT (sizeof(ttcd->ts)/sizeof(Tetro))
+} *stcd; //31b
+#define TSCOUNT (sizeof(stcd->ts)/sizeof(Tetro))
 #define TITLETETRISTICKSPEED 40
 
-void TetrisResetTitle(void* tmem){
-	ttcd = tmem;
+void TetrisResetTitle(){
 	for (uint8_t i = 0; i < TSCOUNT; ++i){
 		do{
-			ttcd->ts[i].type = ((uint8_t)xorshift32())&7;
-		}while (!ttcd->ts[i].type);
-		buildTShape(&ttcd->ts[i]);
-		ttcd->ts[i].pos.x = xorshift32()&15;
-		ttcd->ts[i].pos.y = TITLEMINHEIGHT + i*3;
+			stcd->ts[i].type = ((uint8_t)xorshift32())&7;
+		}while (!stcd->ts[i].type);
+		buildTShape(&stcd->ts[i]);
+		stcd->ts[i].pos.x = xorshift32()&15;
+		stcd->ts[i].pos.y = TITLEMINHEIGHT + i*3;
 	}
-	ttcd->tickCount = 0;
+	stcd->tickCount = 0;
 }
 
 void TetrisDrawTitle(uint8_t dt){
-	++ttcd->tickCount;
+	++stcd->tickCount;
 	for (uint8_t i = 0; i < TSCOUNT; ++i){
-		drawTetro(&ttcd->ts[i], 16);
-		if(ttcd->tickCount > TITLETETRISTICKSPEED){
+		drawTetro(&stcd->ts[i], 16);
+		if(stcd->tickCount > TITLETETRISTICKSPEED){
 			
-			if(++ttcd->ts[i].pos.y > 16){
+			if(++stcd->ts[i].pos.y > 16){
 				do{
-					ttcd->ts[i].type = ((uint8_t)xorshift32())&7;
-				}while (!ttcd->ts[i].type);
-				buildTShape(&ttcd->ts[i]);
-				ttcd->ts[i].pos.x = xorshift32()&15;
-				ttcd->ts[i].pos.y = TITLEMINHEIGHT-1;
+					stcd->ts[i].type = ((uint8_t)xorshift32())&7;
+				}while (!stcd->ts[i].type);
+				buildTShape(&stcd->ts[i]);
+				stcd->ts[i].pos.x = xorshift32()&15;
+				stcd->ts[i].pos.y = TITLEMINHEIGHT-1;
 			}
 		}
 	}
-	if(ttcd->tickCount > TITLETETRISTICKSPEED)
-		ttcd->tickCount = 0;
+	if(stcd->tickCount > TITLETETRISTICKSPEED)
+		stcd->tickCount = 0;
 }
 
-GAMEIMPLEMENT(Tetris)
+GAMEIMPLEMENT(Tetris, td, stcd)

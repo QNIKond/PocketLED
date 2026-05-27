@@ -65,10 +65,9 @@ static void reset(){
 	sd->colorStep = 255/sd->length;
 }
 
-void SnakeStart(void* mem){
-	sd = mem;
-	reset();
-	//sendMsg(0x11);
+void SnakeStart(uint8_t arg){
+	if(arg&OSRESET)
+		reset();
 }
 
 #define GETLASTDIR (sd->iqLen ? (sd->inpQueue>>(sd->iqLen-1))&3 : sd->dir)
@@ -192,8 +191,8 @@ static inline void drawSnake(){
 	uint8_t h = sd->head;
 	uint8_t col = 255;
 	for(uint8_t i = 0; i <sd->length; ++i){
-		if((cx>15)||(cy>15)||(canvas[cy][cx] == 255))
-			DPOINT1;
+// 		if((cx>15)||(cy>15)||(canvas[cy][cx] == 255))
+// 			DPOINT1;
 		canvas[cy][cx] = GAMMA(col);
 		col -= sd->colorStep;
 		uint8_t d = SHAPEGET(h);
@@ -209,7 +208,7 @@ static inline void drawSnake(){
 }
 
 void SnakeStop(){
-	osExitToMenu();
+	osSaveAndExit();
 	
 }
 
@@ -222,8 +221,7 @@ struct{
 #define TITLESNAKELEN 16
 #define TITLESNAKETICKSPEED 15
 
-void SnakeResetTitle(void* tmem){
-	stcd = tmem;
+void SnakeResetTitle(){
 	for (uint8_t i = 0; i < WAVESCOUNT; ++i){
 		stcd->waves[i] = (xorshift32()&3)+1;
 	}
@@ -272,4 +270,4 @@ void SnakeDrawTitle(uint8_t dt){
 	
 }
 
-GAMEIMPLEMENT(Snake)
+GAMEIMPLEMENT(Snake, sd, stcd)
