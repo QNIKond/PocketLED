@@ -51,7 +51,7 @@ void gradientWGammaScreen(){
 
 //const uint8_t shade[8] = {256,254,248,240,224,192,128,64};
 //const uint8_t cshade[8] = {52,58,69,84,106,136,182,255};
-const uint8_t bshade[8] = {128, 192, 255, 255, 255, 255, 255, 255};
+
 void drawLetter(int8_t x, int8_t y, uint8_t letter){
 	uint8_t l = 0;
 	uint16_t bl = 0;
@@ -67,14 +67,22 @@ void drawLetter(int8_t x, int8_t y, uint8_t letter){
 	for (uint8_t j = 0; j < 5; ++j){
 		for (uint8_t i = 0; i < 3; ++i){
 			if(!(((x+i)|(y+j))&240) && (bl&0x8000)){
-				if ((x+i)<8) 
-					canvas[y+j][x+i] = GAMMA(bshade[x+i]);
-				else 
-					canvas[y+j][x+i] = GAMMA(bshade[15-x-i]);
+				canvas[y+j][x+i] = 255;
 			}
 			bl<<=1;
 		}
 	}
+}
+
+const uint8_t bshade[8] = {42, 122, 255, 255, 255, 255, 255, 255};
+void shadeScreen(uint8_t fy){
+	for(uint8_t i = 0; i < fy; ++i)
+		for(uint8_t j = 0; j < 8; ++j){
+			if(canvas[i][j])
+				canvas[i][j] = bshade[j];
+			if(canvas[i][15-j])
+				canvas[i][15-j] = bshade[15-j];
+		}	
 }
 
 // t>>2 < len
@@ -97,4 +105,20 @@ void drawRunningTitle(uint8_t t, int8_t y, const char* str, uint8_t len){
 		lc += 5;
 		if(!(*s)) s = str;
 	}
+}
+
+void drawScoreScreen(uint16_t sc, uint16_t pb){
+	for (int8_t i = 12; i >= 0; i-=4){
+		drawLetter(i,0,'0'+(sc%10));
+		drawLetter(i+1,11,'0'+(pb%10));
+		sc /= 10;
+		pb /= 10;
+	}
+	for (uint8_t i = 5; i < 11; ++i){
+		canvas[9][i] = 255;
+	}
+	canvas[8][5] = 255;
+	canvas[8][7] = 255;
+	canvas[8][8] = 255;
+	canvas[8][10] = 255;
 }

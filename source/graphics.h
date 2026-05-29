@@ -18,8 +18,13 @@ void drawLetter(int8_t x, int8_t y, uint8_t letter);
 
 #define TEXTSCROLLSPEED 13
 #define TEXTINNIT 50
+
+void shadeScreen(uint8_t fy);
+
 void drawRunningText(uint8_t t, int8_t y, const char* str, uint8_t len);
 
 void drawRunningTitle(uint8_t t, int8_t y, const char* str, uint8_t len);
+
+void drawScoreScreen(uint16_t score, uint16_t pb);
 
 #endif /* GRAPHICS_H_ */

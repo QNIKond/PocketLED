@@ -9,6 +9,7 @@
 #define INPA (1<<4)
 #define INPB (1<<5)
 #define INPESC (1<<7)
+#define INPANY ~(1<<6)
 
 extern uint8_t inputRaw;
 extern uint8_t inputDown;

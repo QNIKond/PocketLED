@@ -19,6 +19,12 @@ struct{
 	v3 player;
 	uint8_t atimer;
 	uint8_t depth;
+	
+	uint16_t pathLength;
+	uint16_t optLength;
+	uint8_t isScoreScreen;
+	uint16_t score;
+	uint16_t pb;
 } *md; //197b
 
 #define NVIS	0b000
@@ -116,6 +122,8 @@ static inline void nextTrace(uint8_t *conf, v3 tail){
 			MOVEBACK(head, dir);
 		}
 	}
+	if(!md->optLength)
+		md->optLength = traceCount;
 	while(traceCount){
 		uint8_t dir;
 		POPDIR(trace, traceCount, dir);
@@ -127,6 +135,9 @@ static inline void nextTrace(uint8_t *conf, v3 tail){
 }
 
 static void resetMaze(){
+	md->pathLength = 0;
+	md->score = 0;
+	md->optLength = 0;
 	md->player = (v3){0,0,0};
 	uint8_t confirmed[8*8];
 	v3 tail;
@@ -157,21 +168,32 @@ void MazeStart(uint8_t arg){
 static inline void drawMaze(uint8_t dt);
 static inline void MazeStop();
 void MazeUpdate(uint8_t dt){
+	if(md->isScoreScreen){
+		drawScoreScreen(md->score, md->pb);
+		if(inputUp&INPANY)
+			md->isScoreScreen = 0;
+		return;
+	}
+	
 	if((inputDown&INPRIGHT) && (md->player.x < 7) && GETPOINTV(md->xWalls, md->player))
-		++md->player.x;
+		{++md->player.x;++md->pathLength;}
 	if((inputDown&INPLEFT) && md->player.x && GETPOINT(md->xWalls, md->player.x-1, md->player.y, md->player.z))
-		--md->player.x;
+		{--md->player.x;++md->pathLength;}
 	if((inputDown&INPDOWN) && (md->player.y < 7) && GETPOINTV(md->yWalls, md->player))
-		++md->player.y;
+		{++md->player.y;++md->pathLength;}
 	if((inputDown&INPUP) && md->player.y && GETPOINT(md->yWalls, md->player.x, md->player.y-1, md->player.z))
-		--md->player.y;
+		{--md->player.y;++md->pathLength;}
 	if((inputDown&INPA) && (md->player.z < 7) && GETPOINTV(md->zWalls, md->player))
-		++md->player.z;
+		{++md->player.z;++md->pathLength;}
 	if((inputDown&INPB) && md->player.z && GETPOINT(md->zWalls, md->player.x, md->player.y, md->player.z-1))
-		--md->player.z;
+		{--md->player.z;++md->pathLength;}
 		
 	if((md->player.x == 7) && (md->player.y == 7) && (md->player.z == md->depth-1)){
 		playNote(&N_hardDrop, 192);
+		if(md->pathLength < md->optLength*2)
+			md->score += (md->optLength*2 - md->pathLength)*md->depth;
+		if(md->score < md->pb)
+			md->pb = md->score;
 		++md->depth;
 		resetMaze();
 	}

@@ -148,6 +148,7 @@ void updateMainMenu(uint8_t dt){
 	
 	games[curGame]->drawTitle(dt);
 	
+	
 	for(uint8_t i = 0; i < 16; ++i)
 		for(uint8_t j = 0; j < TITLEMINHEIGHT; ++j)
 			canvas[j][i] = 0;
@@ -157,6 +158,7 @@ void updateMainMenu(uint8_t dt){
 	
 	drawRunningTitle(textT, 0,
 				gameNames[curGame].name,gameNames[curGame].len);
+	shadeScreen(5);
 	
 // 	//Draw Title separator			
 // 	uint8_t temp = 1;

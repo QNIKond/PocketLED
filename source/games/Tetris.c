@@ -23,7 +23,10 @@ struct{
 	uint8_t holdEnabled;
 	uint8_t drop;
 	
-} *td; //93b
+	uint8_t isScoreScreen;
+	uint16_t score;
+	uint16_t pb;
+} *td; //98b
 
 enum{
 	JTETRO=1,//111111
@@ -81,6 +84,7 @@ static void resetTetris(){
 	spawnNextT();
 	td->holdT.type = 0;
 	td->drop = 0;
+	td->score = 0;
 }
 
 void TetrisStart(uint8_t arg){
@@ -174,24 +178,30 @@ static inline void removeRow(uint8_t y){
 static inline void testRows(){
 	uint8_t rhigh = 0xFF;
 	uint8_t rlow = 0xFF;
+	uint8_t sc = 0;
 	for (uint8_t i = 0; i < 10; ++i){
 		rhigh &= td->col[i<<1] | td->col[(i<<1)+20] | td->col[(i<<1)+40];
 		rlow &= td->col[(i<<1)+1] | td->col[(i<<1)+21] | td->col[(i<<1)+41];
 	}
 	uint8_t y = 0;
 	while(rhigh){
-		if (rhigh&1)
+		if (rhigh&1){
 			removeRow(y);
+			++sc;
+		}
 		rhigh >>= 1;
 		++y;
 	}
 	y = 8;
 	while(rlow){
-		if (rlow&1)
-		removeRow(y);
+		if (rlow&1){
+			removeRow(y);
+			++sc;
+		}
 		rlow >>= 1;
 		++y;
 	}
+	td->score += (1 << sc)>>1;
 }
 
 static uint8_t glide;
@@ -216,6 +226,8 @@ static inline void fallT(){
 				uint8_t y = (td->curT.pos.y + td->curT.shape[i].y);
 				if(y>20){
 					playNote(&N_death,200);
+					if(td->pb < td->score)
+						td->pb = td->score;
 					resetTetris();
 					return;
 				}
@@ -255,6 +267,12 @@ static void spawnNextT(){
 static inline void drawTetris(uint8_t dt);
 void TetrisStop();
 void TetrisUpdate(uint8_t dt){
+	if(td->isScoreScreen){
+		drawScoreScreen(td->score, td->pb);
+		if(inputUp&INPANY)
+			td->isScoreScreen = 0;
+		return;
+	}
 	if(inputDown)
 		moveT();
 	if((inputDown&INPUP) && td->holdEnabled){
@@ -321,6 +339,9 @@ static inline void drawTetris(uint8_t dt){
 	VLINE(10, 7, 15, 2);
 	HLINE(11, 10, 15, 2);
 	HLINE(6, 10, 15, 2);
+	
+	drawLetter(13,0,'0'+td->score%10);
+	drawLetter(10,0,'0'+(td->score/10)%10);
 }
 
 void TetrisStop(){

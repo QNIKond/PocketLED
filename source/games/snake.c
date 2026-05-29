@@ -37,7 +37,11 @@ static struct{
 	uint8_t invFrame;
 	
 	uint8_t colorStep;
-} *sd; //78b
+	
+	uint8_t isScoreScreen;
+	uint16_t score;
+	uint16_t pb;
+} *sd; //83b
 
 //#define FMOVE(X,Y, D) ((D)&2 ? (X) : (Y)) += (((D)&1)<<1) - 1;
 #define FMOVE(X,Y, D) if((D)&0b10) (X) += (((D)&1)<<1) - 1; else (Y) += (((D)&1)<<1) - 1;
@@ -63,6 +67,8 @@ static void reset(){
 	sd->invFrame = 0;
 	
 	sd->colorStep = 255/sd->length;
+	
+	sd->score = 0;
 }
 
 void SnakeStart(uint8_t arg){
@@ -144,6 +150,8 @@ static inline void gameTick(){
 			sd->invFrame = 1;
 		else{
 			playNote(&N_death,200);
+			if(sd->pb < sd->score)
+				sd->pb = sd->score;
 			reset();
 		}
 		return;
@@ -157,6 +165,7 @@ static inline void gameTick(){
 			sd->fruitY = xorshift32()&15;
 		} while (testSnakeCollision(sd->fruitX, sd->fruitY));
 		playNote(&N_eat,192);
+		++sd->score;
 		qAdd();
 		sd->colorStep = 255/sd->length;
 	}
@@ -171,6 +180,12 @@ static inline void gameTick(){
 void SnakeStop();
 static inline void drawSnake();
 void SnakeUpdate(uint8_t dt){
+	if(sd->isScoreScreen){
+		drawScoreScreen(sd->score, sd->pb);
+		if(inputUp&INPANY)
+			sd->isScoreScreen = 0;
+		return;
+	}
 	updateDirection();
 	sd->tickT += dt;
 	if(sd->tickT >= SNAKETICKSPEED){ //sd->tickT >= TICKSPEED
