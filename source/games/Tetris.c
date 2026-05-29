@@ -15,6 +15,8 @@ typedef struct  {
 
 struct{
 	uint8_t tickCount;
+	uint8_t fallSpeed;
+	uint8_t lvlCount;
 	
 	uint8_t col[3*10*2]; // col[0]&1 is at the top  60b
 	Tetro curT; //10b
@@ -71,13 +73,17 @@ const uint8_t kicks[] PROGMEM = {
 const uint8_t Tcolors[8] = {0,50,72,108,144,180,216,252};
 #define TCGLOWDOWN 40
 
-#define TETRISTICKSPEED 80
+#define STARTFALLSPEED 80
+#define LVLLENGTH 16
+#define SPEEDDEC 20
 
 #define TKICK(X)
 
 static void spawnNextT();
 static void resetTetris(){
 	td->tickCount = 0;
+	td->fallSpeed = STARTFALLSPEED;
+	td->lvlCount = 0;
  	for (uint8_t i = 0; i < 60; ++i)
  		td->col[i] = 0;
 	spawnNextT();
@@ -202,6 +208,12 @@ static inline void testRows(){
 		++y;
 	}
 	td->score += (1 << sc)>>1;
+	td->lvlCount += (1 << sc)>>1;
+	if(td->lvlCount > LVLLENGTH){
+		td->lvlCount = 0;
+		if(td->fallSpeed > SPEEDDEC)
+		td->fallSpeed -= SPEEDDEC;
+	}
 }
 
 static uint8_t glide;
@@ -214,6 +226,8 @@ static inline void fallT(){
 		else{
 			if(td->curT.pos.y>20){
 				playNote(&N_death,200);
+				if(td->pb < td->score)
+					td->pb = td->score;
 				resetTetris();
 				return;
 			}
@@ -295,7 +309,7 @@ void TetrisUpdate(uint8_t dt){
 		playNote(&N_fastFall,192);
 		td->drop = 1;
 	}
-	if((++td->tickCount > TETRISTICKSPEED) || td->drop){
+	if((++td->tickCount > td->fallSpeed) || td->drop){
 		td->tickCount = 0;
 		fallT();
 	}
@@ -340,8 +354,8 @@ static inline void drawTetris(uint8_t dt){
 	HLINE(11, 10, 15, 2);
 	HLINE(6, 10, 15, 2);
 	
-	drawLetter(13,0,'0'+td->score%10);
-	drawLetter(10,0,'0'+(td->score/10)%10);
+	drawLetter(13,0,'0'+td->lvlCount%10);
+	drawLetter(10,0,'0'+(td->lvlCount/10)%10);
 }
 
 void TetrisStop(){
