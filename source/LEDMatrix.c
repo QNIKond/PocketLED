@@ -8,6 +8,8 @@
 #include <string.h>
 #include "UARTDebug.h"
 
+//#define DISABLESCREEN
+
 static uint8_t screen2[16][16];
 static uint8_t screen1[16][16];
 static uint8_t* currentlyDisplayed = (uint8_t*)screen1;
@@ -18,7 +20,9 @@ void LEDMatrixSetup(volatile uint8_t* frameCount){
 	TCCR0A = 0x02; //CTC mode
 	OCR0A = 64;
 	TCCR0B = 0x02; //Prescaler 8
+	#ifndef DISABLESCREEN
 	TIMSK0 = 0x02; //Enable A match interrupt
+	#endif
 	
 	DDRB |= _BV(PORTB0) | _BV(PORTB1);
 	DDRC |= 0b00111111;
@@ -108,9 +112,11 @@ ISR(TIMER0_COMPA_vect){
 	drawCurRow();
 }
 inline void flushScreenAndWait(){
+	#ifndef DISABLESCREEN
 	while(isNewFrame);
 	prepareScreen((uint8_t*)canvas);
 	isNewFrame = 1;
 	while(isNewFrame);
 	memset((void*)canvas, 0, 16*16);
+	#endif
 }

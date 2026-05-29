@@ -6,6 +6,8 @@
 #define SAVEDATA 2
 #define SAVEVALIDATION 165
 
+#define ISSAVING (EECR & (1<<EERIE))
+
 void saveSetup();
 
 void saveGame(Game *game);

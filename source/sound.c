@@ -129,6 +129,7 @@ void _playNote(const Note *note, uint8_t priority, Note mod){
 }
 
 void endNote(){
+	//DPARAM1()
 	cli();
 	curPriority = 0;
 	TCCR1B &= ~_BV(CS10);
@@ -138,7 +139,6 @@ void endNote(){
 	disablePin();
 	sei();
 }
-
 
 static inline void updateFrequency(uint8_t t){
 	if((curNote.lowRetrigger && (FLTOINT16(curFreqStep) <= curNote.lowRetrigger)) ||
@@ -176,8 +176,12 @@ static inline void nextStage(){
 }
 
 //Called every 512 instructions (31250Hz)
+uint8_t noRecO;
 ISR(TIMER1_OVF_vect){
+	if(noRecO)
+		return;
 	sei();
+	noRecO = 1;
 	freqCount += FLTOINT16(curFreqStep);
 	curFreqStep += (((uint32_t)curSlide+0x80000000)>>8) - 0x800000;
 	curSlide += curNote.dslide;
@@ -200,11 +204,15 @@ ISR(TIMER1_OVF_vect){
 		else
 			++curMq;
 	}
-	cli();
+	noRecO = 0;
 }
 
+uint8_t noRecA;
 ISR(TIMER1_COMPB_vect){
+	if(noRecA)
+		return;
 	sei();
+	noRecA = 1;
 	startMainHalfPeriod();
 	if(curNote.grain)
 		OCR1BL = lerp(0, curMq, 255-lerp(0, (uint8_t)xorshift32(), curNote.grain));
@@ -212,5 +220,5 @@ ISR(TIMER1_COMPB_vect){
 		OCR1BL = curMq;
 	if(OCR1BL < 3)
 		OCR1BL = 3;
-	cli();
+	noRecA = 0;
 }

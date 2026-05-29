@@ -9,7 +9,7 @@ typedef struct{
 	void (*resetTitle)();
 	void (*drawTitle)(uint8_t dt);
 	void **memory;
-	uint8_t memSize;
+	const uint8_t memSize;
 	void **tcmemory;
 	uint16_t eepMemory;
 	uint8_t eepID;

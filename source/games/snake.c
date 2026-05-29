@@ -179,8 +179,6 @@ void SnakeUpdate(uint8_t dt){
 	}
 	drawSnake();
 	
-	DUPDATE1(debugSpeed);
-	
 	if(inputUp&INPESC)
 		SnakeStop();
 }

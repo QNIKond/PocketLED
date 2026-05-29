@@ -6,23 +6,18 @@
 
 uint8_t saves;
 
-volatile uint8_t wrCount;
-uint8_t wrAddr;
-const uint8_t *wrData;
-uint8_t isValidated;
+volatile uint16_t wrCount;
+volatile uint16_t wrAddr;
+volatile const uint8_t *wrData;
 
 static uint8_t readByte(uint16_t p){
-	if(p > 300)
-		DPOINT4;
 	while(EECR & (1<<EEPE));
 	EEAR = p;
 	EECR |= (1<<EERE);
 	return EEDR;
 }
 
-static void writeByte(uint8_t b, uint8_t p){
-	if(p > 300)
-		DPOINT4;
+static void writeByte(uint8_t b, uint16_t p){
 	while(EECR & (1<<EEPE));
 	EEAR = p;
 	EEDR = b;
@@ -45,28 +40,29 @@ void saveSetup(){
 		writeByte(saves, 0);
 		writeByte(SAVEVALIDATION, 1);
 		while(EECR & (1<<EEPE));
-		DPOINT4;
+		//DPOINT4;
 	}
 }
 
 void saveGame(Game *game){
-	while(wrCount);
+	while(ISSAVING);
 	wrCount = game->memSize;
 	wrAddr = game->eepMemory;
 	wrData = *game->memory;
 	
 	saves |= 1<<game->eepID;
-	EECR |= (1<<EERIE);
 	cli();
 	writeByte(saves, 0);
 	sei();
+	EECR |= (1<<EERIE);
 }
 
 ISR(EE_READY_vect){
-	--wrCount;
-	if(!wrCount)
+	if(!wrCount){
 		EECR &= ~(1<<EERIE);
-	
+		return;
+	}
+	--wrCount;
 	if(readByte(wrAddr) != *wrData)
 		writeByte(*wrData, wrAddr);
 	++wrData;
@@ -74,7 +70,7 @@ ISR(EE_READY_vect){
 }
 
 uint8_t restoreGame(Game *game, uint8_t* mem){
-	while(wrCount);
+	while(ISSAVING);
 	if(!(saves&(1<<game->eepID)))
 		return 0;
 
@@ -84,6 +80,7 @@ uint8_t restoreGame(Game *game, uint8_t* mem){
 }
 
 void eraseSave(Game *game){
+	while(ISSAVING);
 	saves &= ~(1<<game->eepID);
 	cli();
 	writeByte(saves, 0);
