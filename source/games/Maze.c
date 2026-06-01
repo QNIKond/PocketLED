@@ -158,11 +158,17 @@ static void resetMaze(){
 	}
 }
 
+static void hardResetMaze(){
+	md->pb = 0;
+}
+
 void MazeStart(uint8_t arg){
 	if(arg&OSRESET){
 		md->depth = 1;
 		resetMaze();
 	}
+	if(arg&OSHARDRESET)
+		hardResetMaze();
 }
 
 static inline void drawMaze(uint8_t dt);
@@ -170,22 +176,22 @@ static inline void MazeStop();
 void MazeUpdate(uint8_t dt){
 	if(md->isScoreScreen){
 		drawScoreScreen(md->score, md->pb);
-		if(inputUp&INPANY)
+		if(inpUpEvent&INPANY)
 			md->isScoreScreen = 0;
 		return;
 	}
 	
-	if((inputDown&INPRIGHT) && (md->player.x < 7) && GETPOINTV(md->xWalls, md->player))
+	if((inpDownEvent&INPRIGHT) && (md->player.x < 7) && GETPOINTV(md->xWalls, md->player))
 		{++md->player.x;++md->pathLength;}
-	if((inputDown&INPLEFT) && md->player.x && GETPOINT(md->xWalls, md->player.x-1, md->player.y, md->player.z))
+	if((inpDownEvent&INPLEFT) && md->player.x && GETPOINT(md->xWalls, md->player.x-1, md->player.y, md->player.z))
 		{--md->player.x;++md->pathLength;}
-	if((inputDown&INPDOWN) && (md->player.y < 7) && GETPOINTV(md->yWalls, md->player))
+	if((inpDownEvent&INPDOWN) && (md->player.y < 7) && GETPOINTV(md->yWalls, md->player))
 		{++md->player.y;++md->pathLength;}
-	if((inputDown&INPUP) && md->player.y && GETPOINT(md->yWalls, md->player.x, md->player.y-1, md->player.z))
+	if((inpDownEvent&INPUP) && md->player.y && GETPOINT(md->yWalls, md->player.x, md->player.y-1, md->player.z))
 		{--md->player.y;++md->pathLength;}
-	if((inputDown&INPA) && (md->player.z < 7) && GETPOINTV(md->zWalls, md->player))
+	if((inpDownEvent&INPA) && (md->player.z < 7) && GETPOINTV(md->zWalls, md->player))
 		{++md->player.z;++md->pathLength;}
-	if((inputDown&INPB) && md->player.z && GETPOINT(md->zWalls, md->player.x, md->player.y, md->player.z-1))
+	if((inpDownEvent&INPB) && md->player.z && GETPOINT(md->zWalls, md->player.x, md->player.y, md->player.z-1))
 		{--md->player.z;++md->pathLength;}
 		
 	if((md->player.x == 7) && (md->player.y == 7) && (md->player.z == md->depth-1)){
@@ -200,7 +206,7 @@ void MazeUpdate(uint8_t dt){
 		
 	drawMaze(dt);
 	
-	if(inputDown&INPESC)
+	if(inpDownEvent&INPESC)
 		MazeStop();
 }
 

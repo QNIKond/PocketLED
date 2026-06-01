@@ -47,7 +47,7 @@ static struct{
 #define FMOVE(X,Y, D) if((D)&0b10) (X) += (((D)&1)<<1) - 1; else (Y) += (((D)&1)<<1) - 1;
 #define GETTAIL (sd->head+1<sd->length ? sd->head+1 : sd->head+1-sd->length)
 
-static void reset(){
+static void resetSnake(){
 	sd->dir = SNRIGHT;
 	sd->length = 3;
 	sd->shape[0] = 0b111111;
@@ -67,26 +67,31 @@ static void reset(){
 	sd->invFrame = 0;
 	
 	sd->colorStep = 255/sd->length;
-	
 	sd->score = 0;
+}
+
+static void hardResetSnake(){
+	sd->pb = 0;
 }
 
 void SnakeStart(uint8_t arg){
 	if(arg&OSRESET)
-		reset();
+		resetSnake();
+	if(arg&OSHARDRESET)
+		hardResetSnake();
 }
 
 #define GETLASTDIR (sd->iqLen ? (sd->inpQueue>>(sd->iqLen-1))&3 : sd->dir)
 static inline void updateDirection(){
 	
 		uint8_t dir;
-	if(inputDown&INPUP)
+	if(inpDownEvent&INPUP)
 		dir = SNUP;
-	else if(inputDown&INPLEFT)
+	else if(inpDownEvent&INPLEFT)
 		dir = SNLEFT;
-	else if(inputDown&INPDOWN)
+	else if(inpDownEvent&INPDOWN)
 		dir = SNDOWN;
-	else if(inputDown&INPRIGHT)
+	else if(inpDownEvent&INPRIGHT)
 		dir = SNRIGHT;
 	else
 		return;
@@ -152,7 +157,7 @@ static inline void gameTick(){
 			playNote(&N_death,200);
 			if(sd->pb < sd->score)
 				sd->pb = sd->score;
-			reset();
+			resetSnake();
 		}
 		return;
 	}
@@ -182,7 +187,7 @@ static inline void drawSnake();
 void SnakeUpdate(uint8_t dt){
 	if(sd->isScoreScreen){
 		drawScoreScreen(sd->score, sd->pb);
-		if(inputUp&INPANY)
+		if(inpUpEvent&INPANY)
 			sd->isScoreScreen = 0;
 		return;
 	}
@@ -194,7 +199,7 @@ void SnakeUpdate(uint8_t dt){
 	}
 	drawSnake();
 	
-	if(inputUp&INPESC)
+	if(inpUpEvent&INPESC)
 		SnakeStop();
 }
 

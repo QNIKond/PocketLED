@@ -93,9 +93,15 @@ static void resetTetris(){
 	td->score = 0;
 }
 
+static void hardResetTetris(){
+	td->pb = 0;
+}
+
 void TetrisStart(uint8_t arg){
 	if(arg&OSRESET)
 		resetTetris();
+	if(arg&OSHARDRESET)
+		hardResetTetris();
 }
 
 static void setPoint(uint8_t x, uint8_t y, uint8_t c){
@@ -131,21 +137,21 @@ static uint8_t testCollision(Tetro *t){
 
 static inline void moveT(){
 	Tetro temp = td->curT;
-	if (inputDown&INPLEFT){
+	if (inpDownEvent&INPLEFT){
 		playNote(&N_Tmove,128);
 		--temp.pos.x;
 		if(testCollision(&temp))
 			return;
 	}
-	else if (inputDown&INPRIGHT){
+	else if (inpDownEvent&INPRIGHT){
 		playNote(&N_Tmove,128);
 		++temp.pos.x;
 		if(testCollision(&temp))
 			return;
 	}
-	if ((inputDown&INPA) || (inputDown&INPB)){
+	if ((inpDownEvent&INPA) || (inpDownEvent&INPB)){
 		playNote(&N_rotate, 128);
-		uint8_t rdir = inputDown&INPA ? -1 : 1;
+		uint8_t rdir = inpDownEvent&INPA ? -1 : 1;
 		temp.rot = (temp.rot+rdir)&3;
 		for (uint8_t i = 0; i < 3; ++i){
 			temp.shape[i].x = td->curT.shape[i].y * (-rdir);
@@ -283,13 +289,13 @@ void TetrisStop();
 void TetrisUpdate(uint8_t dt){
 	if(td->isScoreScreen){
 		drawScoreScreen(td->score, td->pb);
-		if(inputUp&INPANY)
+		if(inpUpEvent&INPANY)
 			td->isScoreScreen = 0;
 		return;
 	}
-	if(inputDown)
+	if(inpDownEvent)
 		moveT();
-	if((inputDown&INPUP) && td->holdEnabled){
+	if((inpDownEvent&INPUP) && td->holdEnabled){
 		
 		uint8_t temp = td->curT.type;
 		if(td->holdT.type){
@@ -305,7 +311,7 @@ void TetrisUpdate(uint8_t dt){
 		td->holdT.pos = (v2){13, 9};
 		td->holdEnabled = 0;
 	}
-	if(inputDown&INPDOWN){
+	if(inpDownEvent&INPDOWN){
 		playNote(&N_fastFall,192);
 		td->drop = 1;
 	}
@@ -314,7 +320,7 @@ void TetrisUpdate(uint8_t dt){
 		fallT();
 	}
 	drawTetris(dt);
-	if(inputUp&INPESC)
+	if(inpUpEvent&INPESC)
 		TetrisStop();
 }
 

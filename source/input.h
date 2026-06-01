@@ -11,9 +11,11 @@
 #define INPESC (1<<7)
 #define INPANY ~(1<<6)
 
-extern uint8_t inputRaw;
-extern uint8_t inputDown;
-extern uint8_t inputUp;
+extern uint8_t inpIsPressed;
+extern uint8_t inpDownEvent;
+extern uint8_t inpUpEvent;
+extern uint8_t inpIsHolding;
+extern uint8_t inpHoldEvent;
 
 void inputSetup();
 

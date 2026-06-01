@@ -43,13 +43,11 @@ void osSetup(){
 	sei();
 }
 
-static void startGame(Game *g){
+static void startGame(Game *g, uint8_t arg){
 	running = g->update;
 	*(g->memory) = &__heap_start;
-	uint8_t arg = 0;
-	//restoreGame(g, &__heap_start);
 	if(!restoreGame(g, &__heap_start))
-		arg = OSRESET;
+		arg |= OSRESET;
 	g->start(arg);
 }
 
@@ -59,14 +57,16 @@ Game *trnGame;
 #define TRNSTEP 512000UL*256/(122UL*TRNTIME_MS)
 uint16_t curTrnTime;
 uint8_t trnDir;
+uint8_t startArgs;
 
-static void startTransition(Game *game){
+static void startTransition(Game *game, uint8_t arg){
 	if(isTransitioning)
 		return;
 	isTransitioning = 1;
 	trnGame = game;
 	curTrnTime = 0;
 	trnDir = 0;
+	startArgs = arg;
 }
 
 static void updateTransition(uint8_t dt){
@@ -78,7 +78,7 @@ static void updateTransition(uint8_t dt){
 			curTrnTime = 255<<8;
 		}
 		else{
-			startGame(trnGame);
+			startGame(trnGame, startArgs);
 			trnDir = 1;
 			curTrnTime = 0;
 		}
@@ -127,21 +127,28 @@ void updateMainMenu(uint8_t dt){
 		if (textT >= gameNames[curGame].len*5) textT = 0;
 	}
 	
-	if (inputUp&INPLEFT) {
+	if (inpUpEvent&INPLEFT) {
 		playNote(&N_dbeep800, 128, FREQSTEP(1400));
 		curGame =(curGame+gamesCount-1)%gamesCount;
 		resetMainMenu();
 	}
-	if (inputUp&INPRIGHT) {
+	if (inpUpEvent&INPRIGHT) {
 		playNote(&N_dbeep800, 128);
 		curGame = (curGame+1)%gamesCount;
 		resetMainMenu();
 	}
-	if((inputUp&INPA)){
+	if((inpUpEvent&INPA)){
 		playNote(&N_enter, 192);
-		startTransition(games[curGame]);
-		//running = games[curGame]->update;
+		startTransition(games[curGame], 0);
 	}
+	if(inpHoldEvent&INPA){
+		playNote(&N_enter, 192);
+		if(inpIsPressed&INPB)
+			startTransition(games[curGame], OSHARDRESET);
+		else
+			startTransition(games[curGame], OSRESET);
+	}
+		
 	
 	xorshift32();
 	
@@ -191,12 +198,12 @@ void osRun(){
 		flushScreenAndWait();
 		updateInput(dt);
 		dt = 1;
-		if (((inputDown&INPUP) && (inputRaw&INPDOWN))||
-		((inputDown&INPDOWN) && (inputRaw&INPUP))){
+		if (((inpDownEvent&INPUP) && (inpIsPressed&INPDOWN))||
+		((inpDownEvent&INPDOWN) && (inpIsPressed&INPUP))){
 			isMuted ^= 1;
 		}
-		if (((inputDown&INPB) && (inputRaw&INPDOWN))||
-		((inputDown&INPDOWN) && (inputRaw&INPB))){
+		if (((inpDownEvent&INPB) && (inpIsPressed&INPDOWN))||
+		((inpDownEvent&INPDOWN) && (inpIsPressed&INPB))){
 			eraseSave(games[curGame]);
 			DPOINT4;
 		}

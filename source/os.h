@@ -32,6 +32,7 @@ extern uint8_t gamesCount;
 #define TITLEMINHEIGHT 6
 #define TITLEMAXHEIGHT 14
 #define OSRESET 1
+#define OSHARDRESET 0b11
 
 #define GAMEIMPLEMENT(G, M, TCM) Game G = {\
 	.start = G##Start,\
