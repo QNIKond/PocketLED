@@ -107,6 +107,7 @@ void drawRunningTitle(uint8_t t, int8_t y, const char* str, uint8_t len){
 	}
 }
 
+#define SCORECOLOR 60
 void drawScoreScreen(uint16_t sc, uint16_t pb){
 	for (int8_t i = 12; i >= 0; i-=4){
 		drawLetter(i,0,'0'+(sc%10));
@@ -115,10 +116,10 @@ void drawScoreScreen(uint16_t sc, uint16_t pb){
 		pb /= 10;
 	}
 	for (uint8_t i = 5; i < 11; ++i){
-		canvas[9][i] = 255;
+		canvas[9][i] = SCORECOLOR;
 	}
-	canvas[8][5] = 255;
-	canvas[8][7] = 255;
-	canvas[8][8] = 255;
-	canvas[8][10] = 255;
+	canvas[8][5] = SCORECOLOR;
+	canvas[8][7] = SCORECOLOR;
+	canvas[8][8] = SCORECOLOR;
+	canvas[8][10] = SCORECOLOR;
 }

@@ -91,6 +91,7 @@ static void resetTetris(){
 	td->holdT.type = 0;
 	td->drop = 0;
 	td->score = 0;
+	td->isScoreScreen = 0;
 }
 
 static void hardResetTetris(){
@@ -234,7 +235,7 @@ static inline void fallT(){
 				playNote(&N_death,200);
 				if(td->pb < td->score)
 					td->pb = td->score;
-				resetTetris();
+				td->isScoreScreen = 1;
 				return;
 			}
 			if(td->drop)
@@ -248,7 +249,7 @@ static inline void fallT(){
 					playNote(&N_death,200);
 					if(td->pb < td->score)
 						td->pb = td->score;
-					resetTetris();
+					td->isScoreScreen = 1;
 					return;
 				}
 				setPoint(	td->curT.pos.x + td->curT.shape[i].x,
@@ -289,8 +290,10 @@ void TetrisStop();
 void TetrisUpdate(uint8_t dt){
 	if(td->isScoreScreen){
 		drawScoreScreen(td->score, td->pb);
-		if(inpUpEvent&INPANY)
-			td->isScoreScreen = 0;
+		if(inpUpEvent&INPANY){
+			
+			resetTetris();
+		}
 		return;
 	}
 	if(inpDownEvent)

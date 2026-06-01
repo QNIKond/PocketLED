@@ -68,6 +68,7 @@ static void resetSnake(){
 	
 	sd->colorStep = 255/sd->length;
 	sd->score = 0;
+	sd->isScoreScreen = 0;
 }
 
 static void hardResetSnake(){
@@ -157,7 +158,7 @@ static inline void gameTick(){
 			playNote(&N_death,200);
 			if(sd->pb < sd->score)
 				sd->pb = sd->score;
-			resetSnake();
+			sd->isScoreScreen = 1;
 		}
 		return;
 	}
@@ -187,8 +188,9 @@ static inline void drawSnake();
 void SnakeUpdate(uint8_t dt){
 	if(sd->isScoreScreen){
 		drawScoreScreen(sd->score, sd->pb);
-		if(inpUpEvent&INPANY)
-			sd->isScoreScreen = 0;
+		if(inpUpEvent&INPANY){
+			resetSnake();
+		}
 		return;
 	}
 	updateDirection();

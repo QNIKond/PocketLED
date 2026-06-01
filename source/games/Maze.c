@@ -136,7 +136,7 @@ static inline void nextTrace(uint8_t *conf, v3 tail){
 
 static void resetMaze(){
 	md->pathLength = 0;
-	md->score = 0;
+	//md->score = 0;
 	md->optLength = 0;
 	md->player = (v3){0,0,0};
 	uint8_t confirmed[8*8];
@@ -165,6 +165,7 @@ static void hardResetMaze(){
 void MazeStart(uint8_t arg){
 	if(arg&OSRESET){
 		md->depth = 1;
+		md->score = 0;
 		resetMaze();
 	}
 	if(arg&OSHARDRESET)
@@ -202,6 +203,7 @@ void MazeUpdate(uint8_t dt){
 			md->pb = md->score;
 		++md->depth;
 		resetMaze();
+		md->isScoreScreen = 1;
 	}
 		
 	drawMaze(dt);
