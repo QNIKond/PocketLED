@@ -81,7 +81,7 @@ void shadeScreen(uint8_t fy){
 			if(canvas[i][j])
 				canvas[i][j] = bshade[j];
 			if(canvas[i][15-j])
-				canvas[i][15-j] = bshade[15-j];
+				canvas[i][15-j] = bshade[j];
 		}	
 }
 

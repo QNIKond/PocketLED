@@ -216,8 +216,8 @@ static inline void testRows(){
 	}
 	td->score += (1 << sc)>>1;
 	td->lvlCount += (1 << sc)>>1;
-	if(td->lvlCount > LVLLENGTH){
-		td->lvlCount = 0;
+	if(td->lvlCount >= LVLLENGTH){
+		td->lvlCount -= LVLLENGTH;
 		if(td->fallSpeed > SPEEDDEC)
 		td->fallSpeed -= SPEEDDEC;
 	}
