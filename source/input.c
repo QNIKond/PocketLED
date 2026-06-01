@@ -28,23 +28,23 @@ static void updateInputStates(uint8_t dt){
 	uint8_t upd = prevInput^inpIsPressed;
 	uint8_t cur = 1;
 	for(uint8_t i = 0; i < 8; ++i){
-		if(timeouts[i]<HOLDTIME)
-			timeouts[i] += dt;
-		else if(inpDownEvent&cur){
-			if(!(inpIsHolding&cur))
-				inpHoldEvent |= cur;
-			inpIsHolding |= cur;
-		}
-		if((cur&upd) & (timeouts[i] >= DEBOUNCETIME)){
+		
+		if((cur&upd) && (timeouts[i] >= DEBOUNCETIME)){
 			timeouts[i] = 0;
-			if(inpIsPressed&(1<<i))
-				inpDownEvent |= (1<<i);
+			if(inpIsPressed&cur)
+				inpDownEvent |= cur;
 			else{
-				inpUpEvent |= (1<<i);
+				inpUpEvent |= cur;
 				inpIsHolding &= ~cur;
 			}
 		}
-	
+		if(timeouts[i]<HOLDTIME)
+			timeouts[i] += dt;
+		else if(inpIsPressed&cur){
+			if(!(inpIsHolding&cur))
+			inpHoldEvent |= cur;
+			inpIsHolding |= cur;
+		}
 		cur <<= 1;
 	}
 	prevInput = inpIsPressed;
