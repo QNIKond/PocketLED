@@ -177,29 +177,29 @@ static inline void MazeStop();
 void MazeUpdate(uint8_t dt){
 	if(md->isScoreScreen){
 		drawScoreScreen(md->score, md->pb);
-		if(inpUpEvent&INPANY)
+		if(inpDownEvent&INPANY)
 			md->isScoreScreen = 0;
 		return;
 	}
 	
 	if((inpDownEvent&INPRIGHT) && (md->player.x < 7) && GETPOINTV(md->xWalls, md->player))
-		{++md->player.x;++md->pathLength;}
+		{++md->player.x;++md->pathLength; playNote(&N_Smove, 128);}
 	if((inpDownEvent&INPLEFT) && md->player.x && GETPOINT(md->xWalls, md->player.x-1, md->player.y, md->player.z))
-		{--md->player.x;++md->pathLength;}
+		{--md->player.x;++md->pathLength; playNote(&N_Smove, 128);}
 	if((inpDownEvent&INPDOWN) && (md->player.y < 7) && GETPOINTV(md->yWalls, md->player))
-		{++md->player.y;++md->pathLength;}
+		{++md->player.y;++md->pathLength; playNote(&N_Smove, 128);}
 	if((inpDownEvent&INPUP) && md->player.y && GETPOINT(md->yWalls, md->player.x, md->player.y-1, md->player.z))
-		{--md->player.y;++md->pathLength;}
+		{--md->player.y;++md->pathLength; playNote(&N_Smove, 128);}
 	if((inpDownEvent&INPA) && (md->player.z < 7) && GETPOINTV(md->zWalls, md->player))
-		{++md->player.z;++md->pathLength;}
+		{++md->player.z;++md->pathLength; playNote(&N_rotate, 128);}
 	if((inpDownEvent&INPB) && md->player.z && GETPOINT(md->zWalls, md->player.x, md->player.y, md->player.z-1))
-		{--md->player.z;++md->pathLength;}
+		{--md->player.z;++md->pathLength; playNote(&N_rotate, 128);}
 		
 	if((md->player.x == 7) && (md->player.y == 7) && (md->player.z == md->depth-1)){
 		playNote(&N_hardDrop, 192);
 		if(md->pathLength < md->optLength*2)
 			md->score += (md->optLength*2 - md->pathLength)*md->depth;
-		if(md->score < md->pb)
+		if(md->score > md->pb)
 			md->pb = md->score;
 		++md->depth;
 		resetMaze();
